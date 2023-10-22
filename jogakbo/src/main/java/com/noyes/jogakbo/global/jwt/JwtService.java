@@ -43,7 +43,7 @@ public class JwtService {
   private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
   private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
   private static final String EMAIL_CLAIM = "email";
-  private static final String ID_CLAIM = "id";
+  private static final String ID_CLAIM = "socialId";
   private static final String BEARER = "Bearer ";
 
   private final UserRepository userRepository;
@@ -139,7 +139,7 @@ public class JwtService {
     }
   }
 
-  public Optional<String> extractId(String accessToken) {
+  public Optional<String> extractSocialId(String accessToken) {
     try {
       // 토큰 유효성 검사하는 데에 사용할 알고리즘이 있는 JWT verifier builder 반환
       return Optional.ofNullable(JWT.require(Algorithm.HMAC512(secretKey))
