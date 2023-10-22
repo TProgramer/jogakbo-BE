@@ -1,0 +1,14 @@
+type User {
+  id: ID!
+  name: String!
+  age: Int!
+}
+
+type Query {
+  getUser(id: ID!): User
+  getUsers: [User]
+}
+
+type Mutation {
+  save(name: String!, age: Int!): User
+}
