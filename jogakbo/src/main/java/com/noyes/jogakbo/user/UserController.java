@@ -1,5 +1,6 @@
 package com.noyes.jogakbo.user;
 
+import java.security.Principal;
 import java.text.ParseException;
 import java.util.List;
 
@@ -59,10 +60,10 @@ public class UserController {
    */
   @Operation(description = "유저 정보 수정 메서드입니다.")
   @PutMapping()
-  public ResponseEntity<UserEntity> updateUser(@AuthenticationPrincipal UserDetails token,
+  public ResponseEntity<UserDocument> updateUser(@AuthenticationPrincipal UserDetails token,
       @RequestBody UserUpdateDTO updateData) throws ParseException {
 
-    UserEntity updatedUser = userService.updateUserInfo(token, updateData);
+    UserDocument updatedUser = userService.updateUserInfo(token, updateData);
 
     if (!ObjectUtils.isEmpty(updatedUser)) {
 
@@ -80,10 +81,10 @@ public class UserController {
    * @return
    */
   @Operation(description = "유저 전체 조회 메서드입니다.")
-  @GetMapping()
-  public ResponseEntity<List<UserEntity>> getUsers() {
+  @GetMapping("/list")
+  public ResponseEntity<List<UserDocument>> getUsers() {
 
-    List<UserEntity> users = userService.getUsers();
+    List<UserDocument> users = userService.getUsers();
 
     return new ResponseEntity<>(users, HttpStatus.OK);
   }
@@ -95,10 +96,11 @@ public class UserController {
    * @return
    */
   @Operation(description = "특정 유저 조회 메서드입니다.")
-  @GetMapping("{id}")
-  public ResponseEntity<UserEntity> getUser(@PathVariable("email") String email) {
+  @GetMapping("{socialId}")
+  public ResponseEntity<UserDocument> getUser(Principal principal) {
 
-    UserEntity user = userService.getUser(email);
+    String socialId = principal.getName();
+    UserDocument user = userService.getUser(socialId);
 
     return new ResponseEntity<>(user, HttpStatus.OK);
   }
@@ -110,11 +112,11 @@ public class UserController {
    * @return
    */
   @Operation(description = "특정 유저 제거 메서드입니다.")
-  @DeleteMapping("{id}")
-  public ResponseEntity<Long> deleteUser(@PathVariable("id") Long id) {
+  @DeleteMapping("{socialId}")
+  public ResponseEntity<String> deleteUser(@PathVariable("socialId") String socialId) {
 
-    userService.deleteUser(id);
+    userService.deleteUser(socialId);
 
-    return new ResponseEntity<>(id, HttpStatus.OK);
+    return new ResponseEntity<>(socialId, HttpStatus.OK);
   }
 }

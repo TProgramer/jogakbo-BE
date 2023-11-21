@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Getter
 public class UserSignUpDTO {
 
-  private String email;
-  private String password;
+  private String socialId;
   private String nickname;
   private int age;
 }

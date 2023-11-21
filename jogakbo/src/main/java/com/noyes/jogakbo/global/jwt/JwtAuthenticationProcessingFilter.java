@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.noyes.jogakbo.user.Role;
-import com.noyes.jogakbo.user.UserEntity;
+import com.noyes.jogakbo.user.UserDocument;
 import com.noyes.jogakbo.user.UserRepository;
 
 import javax.servlet.FilterChain;
@@ -63,7 +63,19 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
           .filter(jwtService::isTokenValid)
           .ifPresent(accessToken -> jwtService.extractSocialId(accessToken)
               .ifPresent(socialId -> userRepository.findBySocialId(socialId)
-                  .ifPresentOrElse(this::saveAuthentication, () -> {
+                  .ifPresentOrElse((user) -> {
+                    String newAccessToken = jwtService.createAccessToken(socialId);
+                    // JwtService의 createRefreshToken을 사용하여 RefreshToken 발급
+                    String newRefreshToken = jwtService.createRefreshToken();
+                    // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
+                    jwtService.sendAccessAndRefreshToken(response, newAccessToken, newRefreshToken);
+                    user.updateRefreshToken(newRefreshToken);
+                    userRepository.save(user);
+                    saveAuthentication(user);
+                    log.info("로그인에 성공하였습니다. socialID : {}", socialId);
+                    log.info("---------------------- AccessToken : {}", newAccessToken);
+                    log.info("발급된 AccessToken 만료 기간 : {}", accessTokenExpiration);
+                  }, () -> {
                     // JwtService의 createAccessToken을 사용하여 AccessToken 발급
                     String newAccessToken = jwtService.createAccessToken(socialId);
                     // JwtService의 createRefreshToken을 사용하여 RefreshToken 발급
@@ -72,12 +84,12 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
                     // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
                     jwtService.sendAccessAndRefreshToken(response, newAccessToken, newRefreshToken);
 
-                    UserEntity user = UserEntity.builder()
+                    UserDocument user = UserDocument.builder()
                         .socialId(socialId)
                         .role(Role.USER)
                         .build();
                     user.updateRefreshToken(newRefreshToken);
-                    userRepository.saveAndFlush(user);
+                    userRepository.save(user);
                     saveAuthentication(user);
                     log.info("로그인에 성공하였습니다. socialID : {}", socialId);
                     log.info("---------------------- AccessToken : {}", newAccessToken);
@@ -126,7 +138,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     userRepository.findByRefreshToken(refreshToken)
         .ifPresent(user -> {
           String reIssuedRefreshToken = reIssueRefreshToken(user);
-          jwtService.sendAccessAndRefreshToken(response, jwtService.createAccessToken(user.getEmail()),
+          jwtService.sendAccessAndRefreshToken(response, jwtService.createAccessToken(user.getSocialId()),
               reIssuedRefreshToken);
         });
   }
@@ -138,11 +150,11 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
    * DB에 재발급한 Refresh Token 업데이트 후 Flush
    * </pre>
    */
-  private String reIssueRefreshToken(UserEntity user) {
+  private String reIssueRefreshToken(UserDocument user) {
 
     String reIssuedRefreshToken = jwtService.createRefreshToken();
     user.updateRefreshToken(reIssuedRefreshToken);
-    userRepository.saveAndFlush(user);
+    userRepository.save(user);
 
     return reIssuedRefreshToken;
   }
@@ -166,8 +178,8 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
     jwtService.extractAccessToken(request)
         .filter(jwtService::isTokenValid)
-        .ifPresent(accessToken -> jwtService.extractEmail(accessToken)
-            .ifPresent(email -> userRepository.findByEmail(email)
+        .ifPresent(socialId -> jwtService.extractSocialId(socialId)
+            .ifPresent(email -> userRepository.findBySocialId(email)
                 .ifPresent(this::saveAuthentication)));
 
     filterChain.doFilter(request, response);
@@ -191,11 +203,9 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
    * setAuthentication()을 이용하여 위에서 만든 Authentication 객체에 대한 인증 허가 처리
    * </pre>
    */
-  public void saveAuthentication(UserEntity myUser) {
-    String password = myUser.getPassword();
-    if (password == null) { // 소셜 로그인 유저의 비밀번호 임의로 설정 하여 소셜 로그인 유저도 인증 되도록 설정
-      password = PasswordUtil.generateRandomPassword();
-    }
+  public void saveAuthentication(UserDocument myUser) {
+
+    String password = PasswordUtil.generateRandomPassword();
 
     UserDetails userDetailsUser = User.builder()
         .username(myUser.getSocialId())

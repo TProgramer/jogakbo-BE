@@ -4,38 +4,6 @@ spring:
   config:
     import:
       - classpath:jogakbo-Secrets/jwt.yml
-  graphql:
-    graphiql:
-      enabled: true # graphiql을 통해 테스트 가능 여부 (localhost:8080/graphiql)
-    schema:
-      locations: classpath:graphql/**/
-      fileExtensions: .graphqls, .gqls
-      printer:
-        enabled: true # show-sql와 같이 graphql 콘솔에 쿼리 출력
-
-  jpa:
-    open-in-view: true # 웹 요청이 완료될 때까지 동일한 EntityManager를 갖도록 하는 설정이지만, 성능과 확장성 면에서 떨어짐 (기본값)
-    hibernate:
-      ddl-auto: create # 어플리케이션 실행 시, DB 테이블 자동생성 방식
-      # create : 애플리케이션 실행 시 테이블을 모두 제거하고 다시 생성 (drop & create)
-      # create-drop : 애플리케이션 실행 시 테이블을 모두 제거하고 다시 생성하며, 애플리케이션 종료 시점에 테이블을 모두 제거 (drop & create & drop)
-      # update : 애플리케이션 실행 시 변경점만 반영
-      # validate : 현재 테이블 정보가 entity에 정의된 내용과 동일한지 체크 후, 다를 경우 경고를 출력하며 애플리케이션을 실행하지 않음
-      # none : 자동생성을 사용하지 않음
-    properties:
-      hibernate:
-        diarect: org.hibernate.dialect.MySQL5InnoDBDialect # 작성할 쿼리의 기준 DB 엔진 설정
-        format_sql: true # 쿼리 포맷팅
-        use_sql_comments: true # SQL 쿼리에 주석으로 추가정보 제공
-
-logging:
-  level:
-    org:
-      hibernate:
-        SQL: DEBUG
-        type:
-          descriptor:
-            sql: trace # 쿼리의 ?에 어떤 값이 들어가는지 TRACE Log에 값을 보여주는 설정
 ---
 spring:
   config:

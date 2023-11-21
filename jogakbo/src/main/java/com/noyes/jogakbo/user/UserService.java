@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
-  private final PasswordEncoder passwordEncoder;
 
   /**
    * User 생성
@@ -31,18 +30,16 @@ public class UserService {
    */
   public void signUp(UserSignUpDTO userSignUpDto) throws Exception {
 
-    if (userRepository.findByEmail(userSignUpDto.getEmail()).isPresent()) {
+    if (userRepository.findBySocialId(userSignUpDto.getSocialId()).isPresent()) {
       throw new Exception("이미 존재하는 이메일입니다.");
     }
 
-    UserEntity user = UserEntity.builder()
-        .email(userSignUpDto.getEmail())
-        .password(userSignUpDto.getPassword())
+    UserDocument user = UserDocument.builder()
+        .socialId(userSignUpDto.getSocialId())
         .nickname(userSignUpDto.getNickname())
         .role(Role.USER)
         .build();
 
-    user.passwordEncode(passwordEncoder);
     userRepository.save(user);
   }
 
@@ -56,23 +53,18 @@ public class UserService {
    * @param model
    * @return
    */
-  public UserEntity updateUserInfo(UserDetails token, UserUpdateDTO updateData) {
+  public UserDocument updateUserInfo(UserDetails token, UserUpdateDTO updateData) {
 
-    UserEntity updatedUser = null;
+    UserDocument updatedUser = null;
 
     try {
 
       if (updateData.isUserUpdateEmpty())
         throw new Exception("Required info is not qualified");
 
-      UserEntity existUser = getUser(token.getUsername());
+      UserDocument existUser = getUser(token.getUsername());
 
       existUser.setNickname(updateData.getNickname());
-      existUser.setBirthDay(updateData.getBirthDay());
-      existUser.setPhoneNum(updateData.getPhoneNum());
-
-      if (!existUser.isUserInfoEmpty())
-        existUser.authorizeUser();
 
       // if (!ObjectUtils.isEmpty(existUser))
       // updatedUser = userRepository.save(model);
@@ -91,7 +83,7 @@ public class UserService {
    * 
    * @return
    */
-  public List<UserEntity> getUsers() {
+  public List<UserDocument> getUsers() {
     return userRepository.findAll();
   }
 
@@ -104,9 +96,9 @@ public class UserService {
    * @param id
    * @return
    */
-  public UserEntity getUser(String email) {
+  public UserDocument getUser(String socialId) {
 
-    return userRepository.findByEmail(email).get();
+    return userRepository.findBySocialId(socialId).get();
   }
 
   /**
@@ -115,7 +107,7 @@ public class UserService {
    * 
    * @param id
    */
-  public void deleteUser(Long id) {
-    userRepository.deleteById(id);
+  public void deleteUser(String socialId) {
+    userRepository.deleteBySocialId(socialId);
   }
 }

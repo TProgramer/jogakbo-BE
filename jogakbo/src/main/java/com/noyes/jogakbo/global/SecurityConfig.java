@@ -2,6 +2,7 @@ package com.noyes.jogakbo.global;
 
 import com.noyes.jogakbo.global.jwt.JwtAuthenticationProcessingFilter;
 import com.noyes.jogakbo.global.jwt.JwtService;
+import com.noyes.jogakbo.user.UserDocument;
 import com.noyes.jogakbo.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -49,24 +50,34 @@ public class SecurityConfig {
         // .logoutSuccessUrl("/login") // 로그아웃 성공 후 targetUrl,
         // logoutSuccessHandler 가 있다면 효과 없으므로 주석처리.
         .addLogoutHandler((request, response, authentication) -> {
-          log.info("로그아웃 핸들러 동작 중", authentication.getPrincipal().getClass().getName());
-          userRepository.findBySocialId(authentication.getPrincipal().getClass().getName())
-              .ifPresentOrElse(user -> {
-                log.info("유저 발견");
-                user.updateRefreshToken(null);
-                userRepository.saveAndFlush(user);
-              }, () -> {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                try {
-                  response.sendRedirect("/");
-                } catch (IOException e) {
-                  e.printStackTrace();
-                }
+          log.info("로그아웃 호출");
+          // TODO - 로그아웃 당시에 토큰이 만료됐을 경우를 추가 고려
+          jwtService.extractAccessToken(request)
+              .filter(jwtService::isTokenValid)
+              .ifPresentOrElse(accessToken -> jwtService.extractEmail(accessToken)
+                  .ifPresentOrElse(socialID -> userRepository.findBySocialId(socialID)
+                      .ifPresent((user) -> {
+                        user.updateRefreshToken(null);
+                        userRepository.save(user);
+                        log.info("리프레시 토큰 삭제");
+                        log.info("로그아웃 성공!");
+                        response.setStatus(HttpServletResponse.SC_OK);
+                      }), () -> {
+                        log.info("잘못된 요청값");
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                      }),
+                  () -> {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                  });
+          jwtService.extractRefreshToken(request)
+              .filter(jwtService::isTokenValid)
+              .ifPresent((refreshToken) -> {
+                return;
               });
+
         }) // 로그아웃 핸들러 추가
         .logoutSuccessHandler((request, response, authentication) -> {
-          response.setStatus(HttpServletResponse.SC_OK);
-          response.sendRedirect("/");
+          response.sendRedirect("/login");
         }); // 로그아웃 성공 핸들러
     http
         .formLogin().disable() // FormLogin 사용 안함
@@ -85,7 +96,10 @@ public class SecurityConfig {
         .authorizeRequests()
         // 아이콘, css, js 관련
         // 기본 페이지, css, image, js 하위 폴더에 있는 자료들은 모두 접근 가능, graphiql에도 추가로 접근 가능
-        .antMatchers("/css/**", "/images/**", "/js/**", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**")
+        .antMatchers("/css/**", "/images/**", "/js/**", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**", "/logout",
+            "/album-ws",
+            "/**",
+            "/ws")
         .permitAll()
         .anyRequest().authenticated(); // 위의 경로 이외에는 모두 인증된 사용자만 접근 가능
 
