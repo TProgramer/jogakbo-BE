@@ -1,14 +1,20 @@
 package com.noyes.jogakbo.user;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.noyes.jogakbo.album.Album;
+import com.noyes.jogakbo.global.jwt.JwtService;
 
 @Slf4j
 @Service
@@ -17,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final JwtService jwtService;
 
   /**
    * User 생성
@@ -30,17 +37,138 @@ public class UserService {
    */
   public void signUp(UserSignUpDTO userSignUpDto) throws Exception {
 
-    if (userRepository.findBySocialId(userSignUpDto.getSocialId()).isPresent()) {
+    if (userRepository.findById(userSignUpDto.getSocialId()).isPresent()) {
       throw new Exception("이미 존재하는 이메일입니다.");
     }
 
-    UserDocument user = UserDocument.builder()
-        .socialId(userSignUpDto.getSocialId())
+    User user = User.builder()
+        .socialID(userSignUpDto.getSocialId())
         .nickname(userSignUpDto.getNickname())
         .role(Role.USER)
         .build();
 
     userRepository.save(user);
+  }
+
+  public Optional<User> checkUser(HttpServletResponse response, String accessToken) {
+
+    String socialID = jwtService.extractSocialId(accessToken).get();
+    Optional<User> targetUser = userRepository.findById(socialID);
+
+    if (targetUser.isPresent())
+      return updateToken(response, socialID, targetUser);
+
+    return registUser(response, socialID, accessToken);
+  }
+
+  public Optional<User> updateToken(HttpServletResponse response, String socialID, Optional<User> targetUser) {
+
+    String newAccessToken = jwtService.createAccessToken(socialID);
+    String newRefreshToken = jwtService.createRefreshToken();
+
+    // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
+    jwtService.sendAccessAndRefreshToken(response, newAccessToken, newRefreshToken);
+
+    User user = targetUser.get();
+    user.updateRefreshToken(newRefreshToken);
+    userRepository.save(user);
+    log.info("=============================================");
+    log.info("로그인에 성공하였습니다. socialID : {}", socialID);
+    log.info("AccessToken : {}", newAccessToken);
+
+    return targetUser;
+  }
+
+  public Optional<User> registUser(HttpServletResponse response, String socialID, String accessToken) {
+
+    String newAccessToken = jwtService.createAccessToken(socialID);
+    String newRefreshToken = jwtService.createRefreshToken();
+
+    // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
+    jwtService.sendAccessAndRefreshToken(response, newAccessToken, newRefreshToken);
+
+    String nickname = jwtService.extractName(accessToken).get();
+    String provider = jwtService.extractProvider(accessToken).get();
+
+    User user = User.builder()
+        .socialID(socialID)
+        .nickname(nickname)
+        .provider(provider)
+        .albums(new ArrayList<>())
+        .friends(new ArrayList<>())
+        .role(Role.USER)
+        .build();
+
+    user.updateRefreshToken(newRefreshToken);
+    userRepository.save(user);
+    log.info("=============================================");
+    log.info("로그인에 성공하였습니다. socialID : {}", socialID);
+    log.info("AccessToken : {}", newAccessToken);
+
+    return Optional.ofNullable(user);
+  }
+
+  /**
+   * <pre>
+   * Refresh Token을 재발급하고 DB에 Refresh Token을 업데이트하는 메소드
+   * jwtService.createRefreshToken()으로 Refresh Token을 재발급 후
+   * DB에 재발급한 Refresh Token 업데이트 후 Flush
+   * </pre>
+   */
+  public void reIssueRefreshToken(HttpServletResponse response, String refreshToken) {
+
+    userRepository.findByRefreshToken(refreshToken)
+        .ifPresent(user -> {
+          String reIssuedRefreshToken = jwtService.createRefreshToken();
+          user.updateRefreshToken(reIssuedRefreshToken);
+          userRepository.save(user);
+          jwtService.sendAccessAndRefreshToken(response, jwtService.createAccessToken(user.getSocialID()),
+              reIssuedRefreshToken);
+        });
+  }
+
+  public void deleteRefreshToken(HttpServletResponse response, String socialID) {
+
+    Optional<User> targetUser = getUser(socialID);
+
+    if (!targetUser.isPresent()) {
+
+      log.info("잘못된 요청값");
+      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
+      return;
+    }
+
+    User user = targetUser.get();
+    user.updateRefreshToken(null);
+    userRepository.save(user);
+    log.info("리프레시 토큰 삭제 완료!");
+    response.setStatus(HttpServletResponse.SC_OK);
+  }
+
+  public Album getAlbum(String socialID, String albumID) {
+
+    List<Album> albums = userRepository.findById(socialID).get().getAlbums();
+    for (Album album : albums) {
+
+      if (album.getAlbumID().equals(albumID))
+        return album;
+    }
+
+    return null;
+  }
+
+  public List<Album> getAlbums(String socialID) {
+
+    return userRepository.findById(socialID).get().getAlbums();
+  }
+
+  public void addAlbum(Album newAlbum, String socialID) {
+
+    User targetUser = userRepository.findById(socialID).get();
+    List<Album> albums = targetUser.getAlbums();
+    albums.add(newAlbum);
+    userRepository.save(targetUser);
   }
 
   /**
@@ -53,16 +181,16 @@ public class UserService {
    * @param model
    * @return
    */
-  public UserDocument updateUserInfo(UserDetails token, UserUpdateDTO updateData) {
+  public User updateUserInfo(UserDetails token, UserUpdateDTO updateData) {
 
-    UserDocument updatedUser = null;
+    User updatedUser = null;
 
     try {
 
       if (updateData.isUserUpdateEmpty())
         throw new Exception("Required info is not qualified");
 
-      UserDocument existUser = getUser(token.getUsername());
+      User existUser = getUser(token.getUsername()).get();
 
       existUser.setNickname(updateData.getNickname());
 
@@ -83,7 +211,7 @@ public class UserService {
    * 
    * @return
    */
-  public List<UserDocument> getUsers() {
+  public List<User> getUsers() {
     return userRepository.findAll();
   }
 
@@ -96,9 +224,9 @@ public class UserService {
    * @param id
    * @return
    */
-  public UserDocument getUser(String socialId) {
+  public Optional<User> getUser(String socialID) {
 
-    return userRepository.findBySocialId(socialId).get();
+    return userRepository.findById(socialID);
   }
 
   /**
@@ -107,7 +235,7 @@ public class UserService {
    * 
    * @param id
    */
-  public void deleteUser(String socialId) {
-    userRepository.deleteBySocialId(socialId);
+  public void deleteUser(String socialID) {
+    userRepository.deleteBySocialID(socialID);
   }
 }

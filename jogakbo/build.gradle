@@ -29,6 +29,8 @@ dependencies {
   implementation 'com.auth0:java-jwt:4.2.1'
   implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
   implementation 'org.springframework.boot:spring-boot-starter-websocket'
+  implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+  implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	compileOnly 'org.projectlombok:lombok'
   // runtimeOnly 'com.mysql:mysql-connector-j'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
