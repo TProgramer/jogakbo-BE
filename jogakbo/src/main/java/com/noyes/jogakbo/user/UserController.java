@@ -18,22 +18,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.noyes.jogakbo.user.DTO.UserProfile;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@RequestMapping("api/user")
+@RequestMapping("/user")
 @RestController
 @Tag(name = "유저", description = "유저 관련 API 입니다.")
 public class UserController {
 
   private final UserService userService;
-
-  @GetMapping("/jwt-test")
-  public String jwtTest() {
-    return "jwtTest 요청 성공";
-  }
 
   /**
    * Member 생성
@@ -60,10 +57,10 @@ public class UserController {
    */
   @Operation(description = "유저 정보 수정 메서드입니다.")
   @PutMapping()
-  public ResponseEntity<UserDocument> updateUser(@AuthenticationPrincipal UserDetails token,
+  public ResponseEntity<User> updateUser(@AuthenticationPrincipal UserDetails token,
       @RequestBody UserUpdateDTO updateData) throws ParseException {
 
-    UserDocument updatedUser = userService.updateUserInfo(token, updateData);
+    User updatedUser = userService.updateUserInfo(token, updateData);
 
     if (!ObjectUtils.isEmpty(updatedUser)) {
 
@@ -82,11 +79,27 @@ public class UserController {
    */
   @Operation(description = "유저 전체 조회 메서드입니다.")
   @GetMapping("/list")
-  public ResponseEntity<List<UserDocument>> getUsers() {
+  public ResponseEntity<List<User>> getUsers() {
 
-    List<UserDocument> users = userService.getUsers();
+    List<User> users = userService.getUsers();
 
     return new ResponseEntity<>(users, HttpStatus.OK);
+  }
+
+  @Operation(description = "본인 프로필 조회 메서드입니다.")
+  @GetMapping("/profile")
+  public ResponseEntity<UserProfile> getProfile(Principal principal) {
+
+    String socialID = principal.getName();
+    User user = userService.getUser(socialID).get();
+    UserProfile userProfile = UserProfile.builder()
+        .nickname(user.getNickname())
+        .profileImageUrl(user.getProfileImageUrl())
+        .friends(user.getFriends())
+        .albums(user.getAlbums())
+        .build();
+
+    return ResponseEntity.ok(userProfile);
   }
 
   /**
@@ -96,11 +109,10 @@ public class UserController {
    * @return
    */
   @Operation(description = "특정 유저 조회 메서드입니다.")
-  @GetMapping("{socialId}")
-  public ResponseEntity<UserDocument> getUser(Principal principal) {
+  @GetMapping("{socialID}")
+  public ResponseEntity<User> getUser(@PathVariable String socialID) {
 
-    String socialId = principal.getName();
-    UserDocument user = userService.getUser(socialId);
+    User user = userService.getUser(socialID).get();
 
     return new ResponseEntity<>(user, HttpStatus.OK);
   }
@@ -112,11 +124,11 @@ public class UserController {
    * @return
    */
   @Operation(description = "특정 유저 제거 메서드입니다.")
-  @DeleteMapping("{socialId}")
-  public ResponseEntity<String> deleteUser(@PathVariable("socialId") String socialId) {
+  @DeleteMapping("{socialID}")
+  public ResponseEntity<String> deleteUser(@PathVariable String socialID) {
 
-    userService.deleteUser(socialId);
+    userService.deleteUser(socialID);
 
-    return new ResponseEntity<>(socialId, HttpStatus.OK);
+    return new ResponseEntity<>(socialID, HttpStatus.OK);
   }
 }

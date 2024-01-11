@@ -2,13 +2,11 @@ package com.noyes.jogakbo.global;
 
 import com.noyes.jogakbo.global.jwt.JwtAuthenticationProcessingFilter;
 import com.noyes.jogakbo.global.jwt.JwtService;
-import com.noyes.jogakbo.user.UserDocument;
 import com.noyes.jogakbo.user.UserRepository;
+import com.noyes.jogakbo.user.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -40,7 +38,7 @@ public class SecurityConfig {
 
   private final CorsConfig corsConfig;
   private final JwtService jwtService;
-  private final UserRepository userRepository;
+  private final UserService userService;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -54,31 +52,16 @@ public class SecurityConfig {
           // TODO - 로그아웃 당시에 토큰이 만료됐을 경우를 추가 고려
           jwtService.extractAccessToken(request)
               .filter(jwtService::isTokenValid)
-              .ifPresentOrElse(accessToken -> jwtService.extractEmail(accessToken)
-                  .ifPresentOrElse(socialID -> userRepository.findBySocialId(socialID)
-                      .ifPresent((user) -> {
-                        user.updateRefreshToken(null);
-                        userRepository.save(user);
-                        log.info("리프레시 토큰 삭제");
-                        log.info("로그아웃 성공!");
-                        response.setStatus(HttpServletResponse.SC_OK);
-                      }), () -> {
-                        log.info("잘못된 요청값");
-                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                      }),
+              .ifPresentOrElse(accessToken -> jwtService.extractSocialId(accessToken)
+                  .ifPresent(socialID -> userService.deleteRefreshToken(response, socialID)),
                   () -> {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                   });
-          jwtService.extractRefreshToken(request)
-              .filter(jwtService::isTokenValid)
-              .ifPresent((refreshToken) -> {
-                return;
-              });
-
-        }) // 로그아웃 핸들러 추가
+        })
+        // 로그아웃 성공 핸들러
         .logoutSuccessHandler((request, response, authentication) -> {
           response.sendRedirect("/login");
-        }); // 로그아웃 성공 핸들러
+        });
     http
         .formLogin().disable() // FormLogin 사용 안함
         .httpBasic().disable() // httpBasic 사용 안함
@@ -140,7 +123,7 @@ public class SecurityConfig {
   public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {
 
     JwtAuthenticationProcessingFilter jwtAuthenticationFilter = new JwtAuthenticationProcessingFilter(jwtService,
-        userRepository);
+        userService);
 
     return jwtAuthenticationFilter;
   }

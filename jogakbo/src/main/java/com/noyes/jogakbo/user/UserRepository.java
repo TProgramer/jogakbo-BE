@@ -3,12 +3,12 @@ package com.noyes.jogakbo.user;
 import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
-public interface UserRepository extends MongoRepository<UserDocument, Long> {
+@EnableMongoRepositories
+public interface UserRepository extends MongoRepository<User, String> {
 
-  Optional<UserDocument> findByRefreshToken(String refreshToken);
+  Optional<User> findByRefreshToken(String refreshToken);
 
-  Optional<UserDocument> findBySocialId(String socialId);
-
-  void deleteBySocialId(String socialId);
+  void deleteBySocialID(String socialID);
 }

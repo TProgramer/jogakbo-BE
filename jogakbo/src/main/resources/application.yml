@@ -4,6 +4,11 @@ spring:
   config:
     import:
       - classpath:jogakbo-Secrets/jwt.yml
+      - classpath:jogakbo-Secrets/s3.yml
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 ---
 spring:
   config:
