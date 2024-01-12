@@ -1,7 +1,5 @@
 package com.noyes.jogakbo.album.DTO;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 import lombok.Builder;

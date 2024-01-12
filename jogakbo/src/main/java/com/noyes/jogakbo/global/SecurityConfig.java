@@ -2,7 +2,6 @@ package com.noyes.jogakbo.global;
 
 import com.noyes.jogakbo.global.jwt.JwtAuthenticationProcessingFilter;
 import com.noyes.jogakbo.global.jwt.JwtService;
-import com.noyes.jogakbo.user.UserRepository;
 import com.noyes.jogakbo.user.UserService;
 
 import lombok.RequiredArgsConstructor;
