@@ -146,7 +146,7 @@ public class UserService {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  public Album getAlbum(String socialID, String albumID) {
+  public Album getAlbumByUser(String socialID, String albumID) {
 
     List<Album> albums = userRepository.findById(socialID).get().getAlbums();
     for (Album album : albums) {
@@ -158,7 +158,7 @@ public class UserService {
     return null;
   }
 
-  public List<Album> getAlbums(String socialID) {
+  public List<Album> getAlbumsByUser(String socialID) {
 
     return userRepository.findById(socialID).get().getAlbums();
   }

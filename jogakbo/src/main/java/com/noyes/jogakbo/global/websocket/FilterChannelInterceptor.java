@@ -36,7 +36,7 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
     assert headerAccessor != null;
     if (headerAccessor.getCommand() == StompCommand.CONNECT) {
       String token = String.valueOf(headerAccessor.getNativeHeader("Authorization").get(0));
-      log.info("token 값 확인 : " + token);
+      log.info("소켓 접속 요청 token 값 확인 : " + token);
     }
 
     String password = PasswordUtil.generateRandomPassword();

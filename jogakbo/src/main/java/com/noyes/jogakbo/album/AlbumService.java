@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noyes.jogakbo.album.DTO.EditMessage;
+import com.noyes.jogakbo.album.DTO.EntryMessage;
 import com.noyes.jogakbo.album.DTO.ImageInfo;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
 import com.noyes.jogakbo.global.redis.RedisService;
@@ -29,14 +30,21 @@ public class AlbumService {
   private final AwsS3Service awsS3Service;
   private final RedisService redisService;
 
-  public Album findAlbumByUser(String socialID, String albumID) {
+  public EntryMessage getEntryMessage(String socialID, String albumID) throws JsonProcessingException {
 
-    return userService.getAlbum(socialID, albumID);
+    String albumName = userService.getAlbumByUser(socialID, albumID).getAlbumName();
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
+    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+
+    return EntryMessage.builder()
+        .albumName(albumName)
+        .imagesInfo(imagesInfo)
+        .build();
   }
 
-  public List<Album> findAllAlbumByUser(String socialID) {
+  public List<Album> getAllAlbumByUser(String socialID) {
 
-    return userService.getAlbums(socialID);
+    return userService.getAlbumsByUser(socialID);
   }
 
   public String createAlbum(String albumName, String socialID) throws JsonProcessingException {
