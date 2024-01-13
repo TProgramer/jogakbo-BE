@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AlbumService {
 
+  private final AlbumRepository albumRepository;
   private final UserService userService;
   private final AwsS3Service awsS3Service;
   private final RedisService redisService;
@@ -59,6 +60,8 @@ public class AlbumService {
         .images(blankImagesProp)
         .albumEditors(new ArrayList<>())
         .build();
+
+    albumRepository.save(newAlbum);
 
     userService.addAlbum(newAlbum, socialID);
 

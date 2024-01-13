@@ -37,9 +37,8 @@ public class UserService {
    */
   public void signUp(UserSignUpDTO userSignUpDto) throws Exception {
 
-    if (userRepository.findById(userSignUpDto.getSocialId()).isPresent()) {
+    if (userRepository.findById(userSignUpDto.getSocialId()).isPresent())
       throw new Exception("이미 존재하는 이메일입니다.");
-    }
 
     User user = User.builder()
         .socialID(userSignUpDto.getSocialId())

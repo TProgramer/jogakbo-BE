@@ -1,10 +1,14 @@
 package com.noyes.jogakbo.user;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.user.DTO.Friend;
@@ -19,14 +23,24 @@ public class User {
 
   @Id
   private String socialID;
-  private Timestamp regDate;
   private Role role;
   private String nickname;
   private String provider;
   private String profileImageUrl;
   private String refreshToken;
-  private List<Album> albums;
   private List<Friend> friends;
+
+  @DocumentReference(lazy = true)
+  private List<Album> albums;
+
+  @Version
+  private int version;
+
+  @CreatedDate
+  private LocalDateTime createdDate;
+
+  @LastModifiedDate
+  private LocalDateTime lastModifiedDate;
 
   // 유저 권한 승격 메소드
   public void authorizeUser() {
