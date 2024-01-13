@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.EditMessage;
+import com.noyes.jogakbo.album.DTO.EntryMessage;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,19 +50,19 @@ public class AlbumController {
     return ResponseEntity.ok(newAlbumID);
   }
 
-  @Operation(description = "유저 소유의 특정 앨범 조회 메서드입니다.")
+  @Operation(description = "특정 앨범 정보 조회 메서드입니다.")
   @GetMapping()
-  public ResponseEntity<Album> getAlbumInfo(@RequestParam String albumID, Principal principal) {
+  public ResponseEntity<EntryMessage> getAlbumInfo(@RequestParam String albumID, Principal principal)
+      throws JsonProcessingException {
 
-    Album album = albumService.findAlbumByUser(principal.getName(), albumID);
-    return ResponseEntity.ok(album);
+    return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumID));
   }
 
   @Operation(description = "유저 소유의 전체 앨범 조회 메서드입니다.")
   @GetMapping("/list")
   public ResponseEntity<List<Album>> album(Principal principal) {
 
-    List<Album> albums = albumService.findAllAlbumByUser(principal.getName());
+    List<Album> albums = albumService.getAllAlbumByUser(principal.getName());
     return ResponseEntity.ok(albums);
   }
 
@@ -97,14 +98,8 @@ public class AlbumController {
   }
 
   @Operation(description = "공동 작업을 위한 웹소켓 메소드 입니다.")
-  // @MessageMapping("/pub")
-  // @SendTo("/topic/sub")
   @MessageMapping("/edit/{albumID}")
   @SendTo("/sub/edit/{albumID}")
-  // public ImagesInPage[] greeting(@DestinationVariable String albumID,
-  // ImagesInPage[] payload) throws Exception {
-  // public List<List<ImagesInPage>> editImage(List<EditMessage> payload) throws
-  // Exception {
   public List<List<ImagesInPage>> editImage(@DestinationVariable String albumID, List<EditMessage> payload)
       throws Exception {
 
