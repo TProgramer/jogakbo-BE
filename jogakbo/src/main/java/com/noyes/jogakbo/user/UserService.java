@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.global.jwt.JwtService;
+import com.noyes.jogakbo.user.DTO.Friend;
 
 @Slf4j
 @Service
@@ -235,6 +236,33 @@ public class UserService {
    * @param id
    */
   public void deleteUser(String socialID) {
+
     userRepository.deleteBySocialID(socialID);
+  }
+
+  /**
+   * nickname에 해당하는 List<User> 조회
+   * JPA Repository의 findBy Method를 사용하여 특정 User 리스트 조회
+   * 
+   * @param id
+   */
+  public List<Friend> searchFriend(String nickname, String socialID) {
+
+    List<User> targetUsers = userRepository.findAllByNicknameContainsAndSocialIDNot(nickname, socialID).get();
+
+    List<Friend> searchResult = new ArrayList<>();
+
+    for (User target : targetUsers) {
+
+      Friend freind = Friend.builder()
+          .nickname(target.getNickname())
+          .socialID(target.getSocialID())
+          .profileImageURL(target.getProfileImageUrl())
+          .build();
+
+      searchResult.add(freind);
+    }
+
+    return searchResult;
   }
 }

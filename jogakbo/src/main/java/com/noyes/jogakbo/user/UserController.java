@@ -2,6 +2,7 @@ package com.noyes.jogakbo.user;
 
 import java.security.Principal;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -100,6 +103,18 @@ public class UserController {
         .build();
 
     return ResponseEntity.ok(userProfile);
+  }
+
+  @Operation(description = "닉네임으로 친구 찾기 메서드입니다.")
+  @GetMapping("/search")
+  public ResponseEntity<List<Friend>> searchFriend(@RequestParam String nickname, Principal principal) {
+
+    if (nickname.equals(""))
+      return ResponseEntity.ok(List.of());
+
+    List<Friend> searchResult = userService.searchFriend(nickname, principal.getName());
+
+    return ResponseEntity.ok(searchResult);
   }
 
   /**
