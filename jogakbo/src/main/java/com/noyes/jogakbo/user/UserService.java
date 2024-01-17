@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.global.jwt.JwtService;
+import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.user.DTO.Friend;
+import com.noyes.jogakbo.user.DTO.UserProfile;
 
 @Slf4j
 @Service
@@ -25,6 +27,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final JwtService jwtService;
+  private final RedisService redisService;
 
   /**
    * User 생성
@@ -96,6 +99,8 @@ public class UserService {
         .provider(provider)
         .albums(new ArrayList<>())
         .friends(new ArrayList<>())
+        .sentFriendRequests(new ArrayList<>())
+        .receivedFriendRequests(new ArrayList<>())
         .role(Role.USER)
         .build();
 
@@ -230,6 +235,27 @@ public class UserService {
   }
 
   /**
+   * Id에 해당하는 User의 Profile 반환
+   * 클래스 내의 getUser() Method를 사용하여 특정 User 객체를 얻어 처리함
+   * 
+   * @param socialID
+   * @return
+   */
+  public UserProfile getUserProfile(String socialID) {
+
+    User user = getUser(socialID).get();
+
+    return UserProfile.builder()
+        .nickname(user.getNickname())
+        .profileImageUrl(user.getProfileImageUrl())
+        .friends(user.getFriends())
+        .sentFriendRequest(user.getSentFriendRequests())
+        .receivedFriendRequest(user.getReceivedFriendRequests())
+        .albums(user.getAlbums())
+        .build();
+  }
+
+  /**
    * Id에 해당하는 User 삭제
    * JPA Repository의 deleteBy Method를 사용하여 특정 User를 삭제
    * 
@@ -264,5 +290,159 @@ public class UserService {
     }
 
     return searchResult;
+  }
+
+  /**
+   * socialID에 해당하는 User에게 친구 신청 보내기
+   * JPA Repository의 findBy Method를 사용하여 특정 User 조회
+   * 
+   * @param socialID
+   */
+  public Friend sendFriendRequest(String reqUserID, String resUserID) {
+
+    // 이미 요청을 보낸 대상일 경우 예외처리
+    User requestUser = userRepository.findById(reqUserID).get();
+    List<Friend> sentFriendRequest = requestUser.getSentFriendRequests();
+
+    if (isUserInFriendList(sentFriendRequest, resUserID) != null)
+      return null;
+
+    // 이미 친구인 경우도 예외처리
+    if (isUserInFriendList(requestUser.getFriends(), resUserID) != null)
+      return null;
+
+    // 친구 요청 리스트에 등록
+    User responseUser = userRepository.findById(resUserID).get();
+    List<Friend> receivedFriendRequest = responseUser.getReceivedFriendRequests();
+
+    Friend responseFreind = Friend.builder()
+        .nickname(responseUser.getNickname())
+        .socialID(responseUser.getSocialID())
+        .profileImageURL(responseUser.getProfileImageUrl())
+        .build();
+
+    sentFriendRequest.add(responseFreind);
+
+    Friend requestFreind = Friend.builder()
+        .nickname(requestUser.getNickname())
+        .socialID(requestUser.getSocialID())
+        .profileImageURL(requestUser.getProfileImageUrl())
+        .build();
+
+    receivedFriendRequest.add(requestFreind);
+
+    userRepository.save(requestUser);
+    userRepository.save(responseUser);
+
+    return requestFreind;
+  }
+
+  /**
+   * socialID에 해당하는 User에게 친구 신청 보내기
+   * JPA Repository의 findBy Method를 사용하여 특정 User 조회
+   * 
+   * @param socialID
+   */
+  public String replyFriendRequest(String reqUserID, String resUserID, String reply) {
+
+    // 친구 요청을 보낸 유저인지 확인
+    User requestUser = userRepository.findById(reqUserID).get();
+    List<Friend> sentFriendRequest = requestUser.getSentFriendRequests();
+
+    Friend targetUser = isUserInFriendList(sentFriendRequest, resUserID);
+
+    if (targetUser == null)
+      return "더 이상 유효하지 않은 친구 요청입니다.";
+
+    // 친구 요청을 받은 유저인지도 확인
+    User responseUser = userRepository.findById(resUserID).get();
+    List<Friend> receivedFriendRequest = responseUser.getReceivedFriendRequests();
+
+    Friend callUser = isUserInFriendList(receivedFriendRequest, reqUserID);
+
+    if (callUser == null)
+      return "존재하지 않는 친구 요청입니다.";
+
+    // 서로의 친구 목록에 추가
+    if (reply.equals("accept")) {
+
+      requestUser.getFriends().add(targetUser);
+      responseUser.getFriends().add(callUser);
+    }
+
+    // 서로의 요청, 승인 대기열에서 삭제
+    sentFriendRequest.remove(targetUser);
+    receivedFriendRequest.remove(callUser);
+
+    // 서로 친구 추가 요청을 보냈을 경우 예외처리
+    List<Friend> doubleCheckSentList = responseUser.getSentFriendRequests();
+    Friend doubleCheckSentUser = isUserInFriendList(doubleCheckSentList, reqUserID);
+
+    if (doubleCheckSentUser != null)
+      doubleCheckSentList.remove(doubleCheckSentUser);
+
+    List<Friend> doubleCheckReceivedList = requestUser.getSentFriendRequests();
+    Friend doubleCheckReceivedUser = isUserInFriendList(doubleCheckReceivedList, resUserID);
+
+    if (doubleCheckReceivedUser != null)
+      doubleCheckReceivedList.remove(doubleCheckReceivedUser);
+
+    // Entity 저장
+    userRepository.save(requestUser);
+    userRepository.save(responseUser);
+
+    return "성공적으로 친구를 추가했습니다.";
+  }
+
+  /**
+   * socialID에 해당하는 Friend를 List에서 찾기
+   * 
+   * @param socialID
+   */
+  public Friend isUserInFriendList(List<Friend> friendList, String socialID) {
+
+    for (Friend friend : friendList) {
+
+      if (friend.getSocialID().equals(socialID))
+        return friend;
+    }
+    return null;
+  }
+
+  /**
+   * socialID에 해당하는 User를 친구 목록에서 삭제하기
+   * JPA Repository의 findBy Method를 사용하여 특정 User에 접근하여 삭제
+   * 
+   * @param socialID
+   */
+  public String removeFriend(String targetUserID, String socialID) {
+
+    // 친구 목록에서 삭제 작업
+    User user = userRepository.findById(socialID).get();
+    List<Friend> friends = user.getFriends();
+
+    Friend target = isUserInFriendList(friends, targetUserID);
+
+    if (target != null)
+      friends.remove(target);
+    else
+      return "이미 친구가 아닌 유저입니다.";
+
+    userRepository.save(user);
+
+    // 상대방의 친구 목록에서도 삭제
+    User targetUser = userRepository.findById(targetUserID).get();
+    List<Friend> targetFriends = targetUser.getFriends();
+
+    Friend targetFriend = isUserInFriendList(targetFriends, socialID);
+
+    if (targetFriend != null)
+      targetFriends.remove(targetFriend);
+    else
+      return "대상 유저의 친구 목록에 존재하지 않습니다.";
+
+    userRepository.save(targetUser);
+
+    return "정상적으로 친구 삭제 작업이 완료되었습니다.";
   }
 }
