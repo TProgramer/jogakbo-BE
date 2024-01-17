@@ -29,6 +29,8 @@ public class User {
   private String profileImageUrl;
   private String refreshToken;
   private List<Friend> friends;
+  private List<Friend> sentFriendRequests;
+  private List<Friend> receivedFriendRequests;
 
   @DocumentReference(lazy = true)
   private List<Album> albums;
