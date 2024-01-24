@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.global.SseEmitters;
+import com.noyes.jogakbo.global.exception.InvalidLoginTokenException;
 import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
