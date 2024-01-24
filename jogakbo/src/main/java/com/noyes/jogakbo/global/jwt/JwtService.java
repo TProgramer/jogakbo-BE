@@ -2,6 +2,7 @@ package com.noyes.jogakbo.global.jwt;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.noyes.jogakbo.global.exception.InvalidLoginTokenException;
 import com.noyes.jogakbo.user.UserRepository;
 
 import lombok.Getter;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -198,7 +200,7 @@ public class JwtService {
       return true;
     } catch (Exception e) {
       log.error("유효하지 않은 토큰입니다. {}", e.getMessage());
-      return false;
+      throw new InvalidLoginTokenException("유효하지 않은 인증 토큰입니다.");
     }
   }
 }
