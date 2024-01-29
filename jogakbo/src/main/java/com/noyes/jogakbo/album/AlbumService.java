@@ -89,7 +89,7 @@ public class AlbumService {
       throws JsonProcessingException {
 
     // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
-    List<String> uploadFileNames = awsS3Service.uploadFile(multipartFiles);
+    List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles);
 
     ObjectMapper objectMapper = new ObjectMapper();
     List<ImageInfo> imageInfos = objectMapper.readValue(fileInfos, new TypeReference<List<ImageInfo>>() {
