@@ -28,7 +28,38 @@ public class AwsS3Service {
 
   private final AmazonS3 amazonS3;
 
-  public List<String> uploadFile(List<MultipartFile> multipartFiles) {
+  /**
+   * Upload single multipartFile to aws s3
+   * 
+   * @param multipartFile
+   * @return result
+   * @throws ResponseStatusException
+   */
+  public String uploadFile(MultipartFile multipartFile) {
+
+    String fileName = createFileName(multipartFile.getOriginalFilename());
+    ObjectMetadata objectMetadata = new ObjectMetadata();
+    objectMetadata.setContentLength(multipartFile.getSize());
+    objectMetadata.setContentType(multipartFile.getContentType());
+
+    try (InputStream inputStream = multipartFile.getInputStream()) {
+      amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, objectMetadata)
+          .withCannedAcl(CannedAccessControlList.PublicRead));
+    } catch (IOException e) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.");
+    }
+
+    return fileName;
+  }
+
+  /**
+   * Upload list of multipartFiles to aws s3
+   * 
+   * @param multipartFiles
+   * @return result
+   * @throws ResponseStatusException
+   */
+  public List<String> uploadFiles(List<MultipartFile> multipartFiles) {
 
     List<String> fileNameList = new ArrayList<>();
 

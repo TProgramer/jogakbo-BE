@@ -6,16 +6,20 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.global.jwt.JwtService;
-import com.noyes.jogakbo.global.redis.RedisService;
+import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
@@ -27,7 +31,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final JwtService jwtService;
-  private final RedisService redisService;
+  private final AwsS3Service awsS3Service;
 
   /**
    * User 생성
@@ -97,6 +101,7 @@ public class UserService {
         .socialID(socialID)
         .nickname(nickname)
         .provider(provider)
+        .profileImageOriginalName("")
         .albums(new ArrayList<>())
         .friends(new ArrayList<>())
         .sentFriendRequests(new ArrayList<>())
@@ -151,7 +156,7 @@ public class UserService {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  public Album getAlbumByUser(String socialID, String albumID) {
+  public Album getAlbumByUser(@NonNull String socialID, String albumID) {
 
     List<Album> albums = userRepository.findById(socialID).get().getAlbums();
     for (Album album : albums) {
@@ -163,12 +168,12 @@ public class UserService {
     return null;
   }
 
-  public List<Album> getAlbumsByUser(String socialID) {
+  public List<Album> getAlbumsByUser(@NonNull String socialID) {
 
     return userRepository.findById(socialID).get().getAlbums();
   }
 
-  public void addAlbum(Album newAlbum, String socialID) {
+  public void addAlbum(Album newAlbum, @NonNull String socialID) {
 
     User targetUser = userRepository.findById(socialID).get();
     List<Album> albums = targetUser.getAlbums();
@@ -229,7 +234,7 @@ public class UserService {
    * @param id
    * @return
    */
-  public Optional<User> getUser(String socialID) {
+  public Optional<User> getUser(@NonNull String socialID) {
 
     return userRepository.findById(socialID);
   }
@@ -298,7 +303,7 @@ public class UserService {
    * 
    * @param socialID
    */
-  public Friend sendFriendRequest(String reqUserID, String resUserID) {
+  public Friend sendFriendRequest(@NonNull String reqUserID, @NonNull String resUserID) {
 
     // 이미 요청을 보낸 대상일 경우 예외처리
     User requestUser = userRepository.findById(reqUserID).get();
@@ -343,7 +348,7 @@ public class UserService {
    * 
    * @param socialID
    */
-  public String replyFriendRequest(String reqUserID, String resUserID, String reply) {
+  public String replyFriendRequest(@NonNull String reqUserID, @NonNull String resUserID, String reply) {
 
     // 친구 요청을 보낸 유저인지 확인
     User requestUser = userRepository.findById(reqUserID).get();
@@ -415,7 +420,7 @@ public class UserService {
    * 
    * @param socialID
    */
-  public String removeFriend(String targetUserID, String socialID) {
+  public String removeFriend(@NonNull String targetUserID, @NonNull String socialID) {
 
     // 친구 목록에서 삭제 작업
     User user = userRepository.findById(socialID).get();
@@ -444,5 +449,38 @@ public class UserService {
     userRepository.save(targetUser);
 
     return "정상적으로 친구 삭제 작업이 완료되었습니다.";
+  }
+
+  /**
+   * socialID에 해당하는 유저의 nickname과 profileImage 수정하기
+   * 유저 간 nickname은 중복가능하며
+   * 기존 profileImage는 삭제 처리
+   * 
+   * @param
+   * @return 실행 결과
+   */
+  public String updateProfile(String newNickname, MultipartFile profileImage, @NonNull String socialID) {
+
+    User user = userRepository.findById(socialID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 유저 ID 입니다."));
+
+    // 기존 nickname과 동일한지 확인 후 수정
+    if (!user.getNickname().equals(newNickname))
+      user.setNickname(newNickname);
+
+    // 기존 profileImage와 동일한지 확인 후 수정
+    String profileImageOriginalName = user.getProfileImageOriginalName();
+    if (profileImage != null && !profileImageOriginalName.equals(profileImage.getOriginalFilename())) {
+
+      // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
+      String uploadFileName = awsS3Service.uploadFile(profileImage);
+
+      user.setProfileImageUrl(uploadFileName);
+      user.setProfileImageOriginalName(profileImageOriginalName);
+    }
+
+    userRepository.save(user);
+
+    return "프로필을 성공적으로 변경했습니다.";
   }
 }

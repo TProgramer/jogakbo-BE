@@ -26,6 +26,7 @@ public class User {
   private Role role;
   private String nickname;
   private String provider;
+  private String profileImageOriginalName;
   private String profileImageUrl;
   private String refreshToken;
   private List<Friend> friends;

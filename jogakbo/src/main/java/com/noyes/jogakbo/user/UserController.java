@@ -19,11 +19,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.global.SseEmitters;
-import com.noyes.jogakbo.global.exception.InvalidLoginTokenException;
 import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
@@ -173,6 +174,17 @@ public class UserController {
     log.debug(res);
 
     return ResponseEntity.ok(res);
+  }
+
+  @Operation(description = "유저의 프로필 변경 API 입니다.")
+  @PutMapping("profile")
+  public ResponseEntity<String> updateProfile(@RequestParam String newNickname,
+      @RequestPart(required = false) MultipartFile profileImage,
+      Principal principal) {
+
+    String result = userService.updateProfile(newNickname, profileImage, principal.getName());
+
+    return ResponseEntity.ok(result);
   }
 
   /**
