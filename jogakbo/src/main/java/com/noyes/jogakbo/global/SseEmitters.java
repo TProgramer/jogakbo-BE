@@ -9,6 +9,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.user.DTO.Friend;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class SseEmitters {
 
@@ -26,7 +29,7 @@ public class SseEmitters {
     return emitter;
   }
 
-  public void sendFriendRequestAlarm(String socialID, Friend requestUser) {
+  public String sendFriendRequestAlarm(String socialID, Friend requestUser) {
 
     try {
 
@@ -37,6 +40,12 @@ public class SseEmitters {
     } catch (IOException e) {
 
       throw new RuntimeException(e);
+
+    } catch (NullPointerException npe) {
+
+      return "해당 유저가 오프라인 상태입니다.";
     }
+
+    return "친구 추가 요청을 완료했습니다.";
   }
 }
