@@ -26,6 +26,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.global.SseEmitters;
 import com.noyes.jogakbo.user.DTO.Friend;
+import com.noyes.jogakbo.user.DTO.FriendSearchResult;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,12 +110,12 @@ public class UserController {
 
   @Operation(description = "닉네임으로 친구 찾기 메서드입니다.")
   @GetMapping("/search")
-  public ResponseEntity<List<Friend>> searchFriend(@RequestParam String nickname, Principal principal) {
+  public ResponseEntity<List<FriendSearchResult>> searchFriend(@RequestParam String nickname, Principal principal) {
 
     if (nickname.equals(""))
       return ResponseEntity.ok(List.of());
 
-    List<Friend> searchResult = userService.searchFriend(nickname, principal.getName());
+    List<FriendSearchResult> searchResult = userService.searchFriend(nickname, principal.getName());
 
     return ResponseEntity.ok(searchResult);
   }
