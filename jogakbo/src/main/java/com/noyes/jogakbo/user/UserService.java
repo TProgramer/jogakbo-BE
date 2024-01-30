@@ -3,6 +3,7 @@ package com.noyes.jogakbo.user;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -21,6 +22,8 @@ import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.user.DTO.Friend;
+import com.noyes.jogakbo.user.DTO.FriendSearchResult;
+import com.noyes.jogakbo.user.DTO.FriendStatus;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 @Slf4j
@@ -277,21 +280,50 @@ public class UserService {
    * 
    * @param id
    */
-  public List<Friend> searchFriend(String nickname, String socialID) {
+  public List<FriendSearchResult> searchFriend(String nickname, String socialID) {
 
+    // nickname을 기준으로 본인을 제외한 유저 불러오기
     List<User> targetUsers = userRepository.findAllByNicknameContainsAndSocialIDNot(nickname, socialID).get();
 
-    List<Friend> searchResult = new ArrayList<>();
+    // 이미 친구인 유저나 이미 요청을 보낸 유저ID 불러오기
+    User user = userRepository.findById(socialID).get();
+
+    List<String> filterFriendUsername = user.getFriends()
+        .stream()
+        .map(Friend::getSocialID)
+        .collect(Collectors.toList());
+
+    List<String> filterWaitingUsername = user.getFriends()
+        .stream()
+        .map(Friend::getSocialID)
+        .collect(Collectors.toList());
+
+    // 필터링한 Friend 목록 추출하기
+    List<FriendSearchResult> searchResult = new ArrayList<>();
 
     for (User target : targetUsers) {
 
-      Friend freind = Friend.builder()
+      FriendStatus friendStatus;
+
+      if (filterFriendUsername.contains(target.getSocialID()))
+        friendStatus = FriendStatus.FRIEND;
+      else if (filterWaitingUsername.contains(target.getSocialID()))
+        friendStatus = FriendStatus.WAITING;
+      else
+        friendStatus = FriendStatus.STRANGER;
+
+      Friend friend = Friend.builder()
           .nickname(target.getNickname())
           .socialID(target.getSocialID())
           .profileImageURL(target.getProfileImageUrl())
           .build();
 
-      searchResult.add(freind);
+      FriendSearchResult friendSearchResult = FriendSearchResult.builder()
+          .friend(friend)
+          .friendStatus(friendStatus)
+          .build();
+
+      searchResult.add(friendSearchResult);
     }
 
     return searchResult;
