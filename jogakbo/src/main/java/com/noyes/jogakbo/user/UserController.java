@@ -129,9 +129,9 @@ public class UserController {
     if (requestUser == null)
       return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
 
-    sseEmitters.sendFriendRequestAlarm(socialID, requestUser);
+    String result = sseEmitters.sendFriendRequestAlarm(socialID, requestUser);
 
-    return ResponseEntity.ok("친구 추가 요청을 완료했습니다.");
+    return ResponseEntity.ok(result);
   }
 
   @Operation(description = "실시간 알림을 위한 SSE 등록 엔드포인트입니다.")
