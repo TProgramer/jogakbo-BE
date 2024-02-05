@@ -28,8 +28,7 @@ public class Album {
 
   private List<List<ImagesInPage>> images;
 
-  @DocumentReference(lazy = true)
-  private User albumOwner;
+  private String albumOwner;
 
   private List<String> albumEditors;
 
