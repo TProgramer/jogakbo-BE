@@ -58,6 +58,7 @@ public class AlbumService {
         .albumID(albumID)
         .albumName(albumName)
         .images(blankImagesProp)
+        .albumOwner(socialID)
         .albumEditors(new ArrayList<>())
         .build();
 
