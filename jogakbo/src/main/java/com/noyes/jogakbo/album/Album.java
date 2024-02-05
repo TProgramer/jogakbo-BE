@@ -26,6 +26,9 @@ public class Album {
 
   private String albumName;
 
+  private String thumbnailImage;
+  private String thumbnailOriginalName;
+
   private List<List<ImagesInPage>> images;
 
   private String albumOwner;
