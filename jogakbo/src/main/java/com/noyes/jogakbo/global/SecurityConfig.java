@@ -59,7 +59,7 @@ public class SecurityConfig {
         })
         // 로그아웃 성공 핸들러
         .logoutSuccessHandler((request, response, authentication) -> {
-          response.sendRedirect("/login");
+          // response.sendRedirect("/login");
         });
     http
         .formLogin().disable() // FormLogin 사용 안함

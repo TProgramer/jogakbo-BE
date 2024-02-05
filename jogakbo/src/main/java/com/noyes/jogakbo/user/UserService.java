@@ -97,6 +97,9 @@ public class UserService {
     // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
     jwtService.sendAccessAndRefreshToken(response, newAccessToken, newRefreshToken);
 
+    // 응답 헤더에 신규 유저임을 표시
+    response.setHeader("userStatus", "newUser");
+
     String nickname = jwtService.extractName(accessToken).get();
     String provider = jwtService.extractProvider(accessToken).get();
 
