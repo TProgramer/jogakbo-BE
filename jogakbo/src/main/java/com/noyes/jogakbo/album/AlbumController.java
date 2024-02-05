@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -106,5 +107,16 @@ public class AlbumController {
     log.info("albumID : " + albumID);
 
     return albumService.editImage(albumID, payload);
+  }
+
+  @Operation(description = "앨범의 프로필 변경 API 입니다.")
+  @PutMapping("profile/{albumID}")
+  public ResponseEntity<String> updateProfile(@PathVariable String albumID, @RequestParam String newAlbumName,
+      @RequestPart(required = false) MultipartFile thumbnailImage,
+      Principal principal) {
+
+    String result = albumService.updateProfile(albumID, newAlbumName, thumbnailImage, principal.getName());
+
+    return ResponseEntity.ok(result);
   }
 }
