@@ -36,13 +36,15 @@ public class AlbumService {
 
   public EntryMessage getEntryMessage(String socialID, String albumID) throws JsonProcessingException {
 
-    String albumName = userService.getAlbumByUser(socialID, albumID).getAlbumName();
+    Album album = userService.getAlbumByUser(socialID, albumID);
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
     List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
 
     return EntryMessage.builder()
-        .albumName(albumName)
+        .albumName(album.getAlbumName())
         .imagesInfo(imagesInfo)
+        .thumbnailImage(album.getThumbnailImage())
+        .createdDate(album.getCreatedDate())
         .build();
   }
 
