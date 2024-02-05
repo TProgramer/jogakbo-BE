@@ -8,10 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
-import com.noyes.jogakbo.user.User;
 
 import lombok.Builder;
 import lombok.Data;
