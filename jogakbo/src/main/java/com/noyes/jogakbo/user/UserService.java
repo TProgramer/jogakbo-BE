@@ -382,6 +382,9 @@ public class UserService {
    */
   public String replyFriendRequest(@NonNull String reqUserID, @NonNull String resUserID, String reply) {
 
+    // 보낸 | 받은 요청 유효성 판별 변수 추가
+    boolean isValidRequest = true;
+
     // 친구 요청을 보낸 유저인지 확인
     User requestUser = userRepository.findById(reqUserID).get();
     List<Friend> sentFriendRequest = requestUser.getSentFriendRequests();
@@ -389,7 +392,7 @@ public class UserService {
     Friend targetUser = isUserInFriendList(sentFriendRequest, resUserID);
 
     if (targetUser == null)
-      return "더 이상 유효하지 않은 친구 요청입니다.";
+      isValidRequest = false;
 
     // 친구 요청을 받은 유저인지도 확인
     User responseUser = userRepository.findById(resUserID).get();
@@ -398,7 +401,17 @@ public class UserService {
     Friend callUser = isUserInFriendList(receivedFriendRequest, reqUserID);
 
     if (callUser == null)
-      return "존재하지 않는 친구 요청입니다.";
+      isValidRequest = false;
+
+    // 서로의 요청, 승인 대기열에서 삭제
+    sentFriendRequest.remove(targetUser);
+    receivedFriendRequest.remove(callUser);
+
+    userRepository.save(requestUser);
+    userRepository.save(responseUser);
+
+    if (!isValidRequest)
+      return "더 이상 유효하지 않은 친구 요청입니다.";
 
     // 서로의 친구 목록에 추가
     if (reply.equals("accept")) {
@@ -406,10 +419,6 @@ public class UserService {
       requestUser.getFriends().add(targetUser);
       responseUser.getFriends().add(callUser);
     }
-
-    // 서로의 요청, 승인 대기열에서 삭제
-    sentFriendRequest.remove(targetUser);
-    receivedFriendRequest.remove(callUser);
 
     // 서로 친구 추가 요청을 보냈을 경우 예외처리
     List<Friend> doubleCheckSentList = responseUser.getSentFriendRequests();
