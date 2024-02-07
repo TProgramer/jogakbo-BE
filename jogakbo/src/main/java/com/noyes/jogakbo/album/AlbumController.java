@@ -95,6 +95,7 @@ public class AlbumController {
       @RequestParam String imageUUID) throws JsonProcessingException {
 
     List<List<ImagesInPage>> imagesInfo = albumService.unloadImage(albumID, pageNum, imageUUID);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
 
     return ResponseEntity.ok("이미지를 성공적으로 제외했습니다.");
   }
