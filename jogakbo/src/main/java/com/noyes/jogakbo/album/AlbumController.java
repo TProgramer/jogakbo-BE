@@ -94,7 +94,8 @@ public class AlbumController {
   public ResponseEntity<String> unloadImage(@PathVariable String albumID, @PathVariable int pageNum,
       @RequestParam String imageUUID) throws JsonProcessingException {
 
-    albumService.unloadImage(albumID, pageNum, imageUUID);
+    List<List<ImagesInPage>> imagesInfo = albumService.unloadImage(albumID, pageNum, imageUUID);
+
     return ResponseEntity.ok("이미지를 성공적으로 제외했습니다.");
   }
 
