@@ -73,7 +73,7 @@ public class AlbumController {
       throws JsonMappingException, JsonProcessingException {
 
     List<List<ImagesInPage>> imagesInfo = albumService.addNewPage(albumID);
-    simpMessageTemplate.convertAndSend("/topic/sub", imagesInfo);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
     return ResponseEntity.ok("페이지를 성공적으로 추가했습니다.");
   }
 
