@@ -73,7 +73,7 @@ public class AlbumController {
       throws JsonMappingException, JsonProcessingException {
 
     List<List<ImagesInPage>> imagesInfo = albumService.addNewPage(albumID);
-    simpMessageTemplate.convertAndSend("/topic/sub", imagesInfo);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
     return ResponseEntity.ok("페이지를 성공적으로 추가했습니다.");
   }
 
@@ -94,7 +94,9 @@ public class AlbumController {
   public ResponseEntity<String> unloadImage(@PathVariable String albumID, @PathVariable int pageNum,
       @RequestParam String imageUUID) throws JsonProcessingException {
 
-    albumService.unloadImage(albumID, pageNum, imageUUID);
+    List<List<ImagesInPage>> imagesInfo = albumService.unloadImage(albumID, pageNum, imageUUID);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
+
     return ResponseEntity.ok("이미지를 성공적으로 제외했습니다.");
   }
 

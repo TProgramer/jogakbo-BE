@@ -125,10 +125,12 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public void unloadImage(String albumID, int pageNum, String imageUUID) throws JsonProcessingException {
+  public List<List<ImagesInPage>> unloadImage(String albumID, int pageNum, String imageUUID)
+      throws JsonProcessingException {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<ImagesInPage> targetList = targetInfo.getImagesInfo().get(pageNum);
+    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    List<ImagesInPage> targetList = imagesInfo.get(pageNum);
 
     for (ImagesInPage tmp : targetList) {
 
@@ -141,6 +143,8 @@ public class AlbumService {
     redisService.setAlbumRedisValue(albumID, targetInfo);
 
     awsS3Service.deleteFile(imageUUID);
+
+    return imagesInfo;
   }
 
   public List<List<ImagesInPage>> editImage(String albumID, List<EditMessage> payload) throws JsonProcessingException {
