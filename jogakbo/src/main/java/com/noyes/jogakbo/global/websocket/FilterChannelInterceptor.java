@@ -35,24 +35,26 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
     assert headerAccessor != null;
     if (headerAccessor.getCommand() == StompCommand.CONNECT) {
+
       String token = String.valueOf(headerAccessor.getNativeHeader("Authorization").get(0));
       log.info("소켓 접속 요청 token 값 확인 : " + token);
+
+      String password = PasswordUtil.generateRandomPassword();
+
+      UserDetails userDetailsUser = User.builder()
+          .username("myUser.getSocialId()")
+          .password(password)
+          // .roles(myUser.getRole().name())
+          .roles("USER")
+          .build();
+
+      Authentication authentication = new UsernamePasswordAuthenticationToken(userDetailsUser, null,
+          authoritiesMapper.mapAuthorities(userDetailsUser.getAuthorities()));
+
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+      headerAccessor.setUser(authentication);
     }
 
-    String password = PasswordUtil.generateRandomPassword();
-
-    UserDetails userDetailsUser = User.builder()
-        .username("myUser.getSocialId()")
-        .password(password)
-        // .roles(myUser.getRole().name())
-        .roles("USER")
-        .build();
-
-    Authentication authentication = new UsernamePasswordAuthenticationToken(userDetailsUser, null,
-        authoritiesMapper.mapAuthorities(userDetailsUser.getAuthorities()));
-
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-    headerAccessor.setUser(authentication);
     return message;
   }
 }
