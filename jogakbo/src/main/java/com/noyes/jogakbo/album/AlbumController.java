@@ -121,4 +121,15 @@ public class AlbumController {
 
     return ResponseEntity.ok(result);
   }
+
+  @Operation(description = "웹소켓 테스트 메소드 입니다.")
+  @MessageMapping("/test/{albumID}")
+  @SendTo("/sub/test/{albumID}")
+  public String testWebSocket(@DestinationVariable String albumID, String payload)
+      throws Exception {
+
+    log.info("albumID : " + albumID);
+
+    return payload;
+  }
 }

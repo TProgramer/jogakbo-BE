@@ -1,72 +1,171 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Title</title>
+    <title>Simple Chat Application using StompJs</title>
+    <link type="text/css" rel="stylesheet" href="../../assets/style.css" />
   </head>
   <body>
-    <input
-      type="text"
-      placeholder="보낼 메세지를 입력하세요."
-      class="content"
-    />
-    <button type="button" value="전송" class="sendBtn" onclick="sendMsg()">
-      전송
-    </button>
-    <button type="button" value="방나가기" class="quit" onclick="quit()">
-      방 나가기
-    </button>
-    <div>
-      <span>메세지</span>
-      <div class="msgArea"></div>
+    <div id="wrapper">
+      <ul>
+        <li>Open multiple browsers or tabs to chat across those.</li>
+        <li>
+          You will need a STOMP broker running. The defaults will work for fresh
+          RabbitMQ on local machine.
+        </li>
+        <li>
+          Adjust the
+          <a
+            href="https://stomp-js.github.io/api-docs/latest/classes/StompConfig.html"
+            >configuration</a
+          >
+          as per your STOMP broker.
+        </li>
+        <li>
+          A guide at
+          <a
+            href="https://stomp-js.github.io/guide/stompjs/2018/06/28/using-stompjs-v5.html"
+          >
+            Using StompJs v5</a
+          >
+        </li>
+        <li>
+          For details on API calls see:
+          <a
+            href="https://stomp-js.github.io/api-docs/latest/classes/Client.html"
+          >
+            API Reference</a
+          >
+        </li>
+        <li>
+          The html/css is heavily based on
+          <a
+            href="https://code.tutsplus.com/tutorials/how-to-create-a-simple-web-based-chat-application--net-5931"
+          >
+            Simple Web-Based Chat Application</a
+          >
+        </li>
+      </ul>
+      <div id="menu">
+        <p class="welcome">
+          Welcome,
+          <input
+            title="username"
+            name="username"
+            id="username"
+            type="text"
+            value="Change Me"
+          />
+        </p>
+      </div>
+
+      <div id="chatbox"></div>
+
+      <input
+        name="usermsg"
+        type="text"
+        id="usermsg"
+        size="63"
+        title="usermsg"
+      />
+      <button name="submitmsg" id="submitmsg">Send</button>
     </div>
+
+    <!-- It is used for DOM manipulation, not mandatory to use stompjs -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+
+    <!-- Include from CDN for better performance, alternatively you can locally copy as well -->
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0-beta2/bundles/stomp.umd.min.js"></script>
+
+    <script type="application/javascript">
+      $(function () {
+        let stompClient;
+        let accessToken = "";
+
+        const stompConfig = {
+          // Broker URL, should start with ws:// or wss:// - adjust for your broker setup
+          brokerURL: "ws://localhost:8080/album-ws",
+
+          // Typically, login, passcode and vhost
+          // Adjust these for your broker
+          connectHeaders: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+
+          // Keep it off for production, it can be quit verbose
+          // Skip this key to disable
+          debug: function (str) {
+            console.log("STOMP: " + str);
+          },
+
+          // If disconnected, it will retry after 200ms
+          reconnectDelay: 200,
+
+          // Subscriptions should be done inside onConnect as those need to reinstated when the broker reconnects
+          onConnect: function (frame) {
+            // The return object has a method called `unsubscribe`
+            const subscription = stompClient.subscribe(
+              "/sub/test/testest",
+              function (message) {
+                const payload = JSON.parse(message.body);
+                displayIncomingMessage(payload.user, payload.usrMsg);
+              }
+            );
+          },
+        };
+
+        // Create an instance
+        stompClient = new StompJs.Client(stompConfig);
+
+        // You can set additional configuration options here
+
+        // Attempt to connect
+        stompClient.activate();
+
+        // For the demo, set a random display user name for the chat, just feels nice
+        $("#username").val("User " + Math.round(Math.random() * 100));
+
+        // Set the DOM event handlers must not be inside onConnect - other for each reconnect it will keep getting added
+        $("#submitmsg").click(function () {
+          if (publishMessage($("#username").val(), $("#usermsg").val())) {
+            clearMessageInput();
+          }
+        });
+
+        function clearMessageInput() {
+          $("#usermsg").val("");
+        }
+
+        function publishMessage(user, message) {
+          // trying to publish a message when the broker is not connected will throw an exception
+          if (!stompClient.connected) {
+            alert("Broker disconnected, can't send message.");
+            return false;
+          }
+          if (message.length > 0) {
+            const payLoad = { user: user, usrMsg: message };
+
+            // You can additionally pass headers
+            stompClient.publish({
+              destination: "/pub/test/testest",
+              body: JSON.stringify(payLoad),
+            });
+          }
+          return true;
+        }
+
+        function displayIncomingMessage(user, message) {
+          const msgDiv = $("<div>").addClass("msgln");
+          msgDiv.html(
+            '<span class="user">[' +
+              user +
+              ']: </span><span class="message">' +
+              message +
+              "</span>"
+          );
+          $("#chatbox").append(msgDiv);
+        }
+      });
+    </script>
   </body>
-
-  <script th:inline="javascript">
-    function enterRoom(socket) {
-      var enterMsg = {
-        type: "ENTER",
-        roomId: "1",
-        sender: "chee",
-        msg: "test",
-      }; //sender는  글쓸때 수정하자.
-      socket.send(JSON.stringify(enterMsg));
-    }
-    let socket = new WebSocket("ws://localhost:8080/ws/album");
-
-    socket.onopen = function (e) {
-      console.log("open server!");
-      enterRoom(socket);
-    };
-    socket.onclose = function (e) {
-      console.log("disconnet");
-    };
-
-    socket.onerror = function (e) {
-      console.log(e);
-    };
-
-    //메세지 수신했을 때 이벤트.
-    socket.onmessage = function (e) {
-      console.log(e.data);
-      let msgArea = document.querySelector(".msgArea");
-      let newMsg = document.createElement("div");
-      newMsg.innerText = e.data;
-      msgArea.append(newMsg);
-    };
-
-    //메세지 보내기 버튼 눌렀을 떄..
-    function sendMsg() {
-      let content = document.querySelector(".content").value;
-      var talkMsg = { type: "TALK", roomId: "1", sender: "chee", msg: content };
-      socket.send(JSON.stringify(talkMsg));
-    }
-
-    function quit() {
-      var quitMsg = { type: "QUIT", roomId: "1", sender: "chee", msg: "" };
-      socket.send(JSON.stringify(quitMsg));
-      socket.close();
-      location.href = "/chat/chatList";
-    }
-  </script>
 </html>
