@@ -36,6 +36,11 @@ public class WebSocketSessionHolder {
     sessionIDsByDest.put(sessionID, sessionIDs);
   }
 
+  public static void removeSession(WebSocketSession session) {
+
+    userSessions.remove(session.getId());
+  }
+
   public static void closeSessionByDestination(String destination) throws IOException {
 
     var sessionIDs = sessionIDsByDest.get(destination);
