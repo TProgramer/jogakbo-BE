@@ -38,17 +38,8 @@ public class WebSocketSessionHolder {
     sessionIDsByDest.put(destination, sessionIDs);
   }
 
-  public static void removeSession(String sessionID, String destination) {
+  public static void removeSession(String sessionID) {
 
-    // sessionsIDsByDest 에서 destination 에 존재하는 sessionID를 제거
-    var sessions = sessionIDsByDest.get(destination);
-    for (var session : sessions) {
-
-      if (session.equals(sessionID))
-        sessionIDsByDest.remove(session);
-    }
-
-    // userSessions 에서도 해당 WebSocketSession 제거
     userSessions.remove(sessionID);
   }
 
