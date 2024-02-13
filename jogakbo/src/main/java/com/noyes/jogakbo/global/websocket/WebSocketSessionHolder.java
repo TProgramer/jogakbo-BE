@@ -65,9 +65,6 @@ public class WebSocketSessionHolder {
         if (session != null) {
 
           session.close(CloseStatus.GOING_AWAY);
-
-          // userSessions 에서도 제거
-          userSessions.remove(sessionID);
         }
       }
       // 마지막으로 sessionIDsByDest 에서 제거
