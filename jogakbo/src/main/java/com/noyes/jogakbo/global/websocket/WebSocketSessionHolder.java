@@ -27,13 +27,15 @@ public class WebSocketSessionHolder {
 
   public static void addSessionByDestination(String sessionID, String destination) {
 
+    // 처음 등록되는 destination 이면, 새로운 ArrayList 할당 후 등록
     var sessionIDs = sessionIDsByDest.get(destination);
 
     if (sessionIDs == null)
       sessionIDs = new ArrayList<String>();
 
+    // destination 을 키 값으로 sessionID를 추가
     sessionIDs.add(sessionID);
-    sessionIDsByDest.put(sessionID, sessionIDs);
+    sessionIDsByDest.put(destination, sessionIDs);
   }
 
   public static void removeSession(WebSocketSession session) {
