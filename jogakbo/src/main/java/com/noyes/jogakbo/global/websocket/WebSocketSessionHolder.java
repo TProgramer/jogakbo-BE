@@ -43,9 +43,16 @@ public class WebSocketSessionHolder {
     if (sessionIDs != null) {
       // sessionIDs를 순회하며 해당하는 WebSocketSession을 close()
       for (var sessionID : sessionIDs) {
-        // CloseStatus로 퇴장 상태 알리고 userSessions 에서 제거
-        userSessions.get(sessionID).close(CloseStatus.GOING_AWAY);
-        userSessions.remove(sessionID);
+        // session 이 살아있다면, userSessions 에서 제거
+        var session = userSessions.get(sessionID);
+
+        if (session != null) {
+
+          session.close(CloseStatus.GOING_AWAY);
+
+          // userSessions 에서도 제거
+          userSessions.remove(sessionID);
+        }
       }
       // 마지막으로 sessionIDsByDest 에서 제거
       sessionIDsByDest.remove(destination);
