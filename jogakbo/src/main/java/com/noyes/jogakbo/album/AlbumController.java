@@ -1,5 +1,6 @@
 package com.noyes.jogakbo.album;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -118,6 +119,15 @@ public class AlbumController {
       Principal principal) {
 
     String result = albumService.updateProfile(albumID, newAlbumName, thumbnailImage, principal.getName());
+
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(description = "앨범 삭제 메서드입니다.")
+  @DeleteMapping("/{albumID}")
+  public ResponseEntity<String> removeAlbum(@PathVariable String albumID, Principal principal) throws IOException {
+
+    String result = albumService.removeAlbum(albumID, principal.getName());
 
     return ResponseEntity.ok(result);
   }
