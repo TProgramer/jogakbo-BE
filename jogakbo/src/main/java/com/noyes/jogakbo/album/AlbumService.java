@@ -1,5 +1,6 @@
 package com.noyes.jogakbo.album;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +19,7 @@ import com.noyes.jogakbo.album.DTO.ImageInfo;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
 import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
+import com.noyes.jogakbo.global.websocket.WebSocketSessionHolder;
 import com.noyes.jogakbo.user.UserService;
 
 import lombok.NonNull;
@@ -215,5 +217,40 @@ public class AlbumService {
     albumRepository.save(album);
 
     return "프로필을 성공적으로 변경했습니다.";
+  }
+
+  public String removeAlbum(String albumID, String socialID) throws IOException {
+
+    // albumID로 앨범 조회
+    Album album = albumRepository.findById(albumID).get();
+
+    // 앨범 소유자의 요청인지 검증
+    if (!album.getAlbumOwner().equals(socialID))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범 소유자만 앨범을 삭제할 수 있습니다.");
+
+    // 앨범에 조회를 막아 추가 입장을 막기 위해 mongoDB에서 Album Entity 삭제
+    albumRepository.deleteById(albumID);
+
+    // 모두를 앨범에서 강제 추방함을 알리고 소켓 연결 종료
+    WebSocketSessionHolder.closeSessionByDestination(albumID);
+
+    // 최신 데이터를 참조하기 위해 redis를 기준으로 이미지 정보 불러오기
+    List<List<ImagesInPage>> imagesInfo = redisService
+        .getAlbumRedisValue(albumID, AlbumImagesInfo.class)
+        .getImagesInfo();
+
+    // 앨범에 업로드된 이미지들을 순회하며 S3 이미지 삭제
+    // To-do: S3 SDK의 deleteObjects 메소드로 한번에 삭제 방식으로 전환 및 예외처리 추가
+    for (List<ImagesInPage> imagesInfoOfIndex : imagesInfo) {
+      for (ImagesInPage imageInfo : imagesInfoOfIndex) {
+
+        awsS3Service.deleteFile(imageInfo.getImageUUID());
+      }
+    }
+
+    // redis에서 AlbumImagesInfo 삭제
+    redisService.removeAlbumRedisValue(albumID);
+
+    return "앨범 삭제 작업을 완료했습니다.";
   }
 }
