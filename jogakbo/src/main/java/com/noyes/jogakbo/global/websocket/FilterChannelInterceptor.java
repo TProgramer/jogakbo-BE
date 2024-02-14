@@ -62,6 +62,12 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
       // sessionID에 구독 albumID를 경로를 업데이트
       WebSocketSessionHolder.updateSessionWithDestination(sessionID, albumID);
+
+    } else if (headerAccessor.getCommand() == StompCommand.DISCONNECT) {
+
+      // 관리 대상에서 특정 sessionID 제거
+      String sessionID = headerAccessor.getSessionId();
+      WebSocketSessionHolder.removeSession(sessionID);
     }
 
     return message;
