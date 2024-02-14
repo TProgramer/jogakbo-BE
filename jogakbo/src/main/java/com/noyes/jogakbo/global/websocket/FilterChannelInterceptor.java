@@ -53,6 +53,15 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
       headerAccessor.setUser(authentication);
+
+    } else if (headerAccessor.getCommand() == StompCommand.SUBSCRIBE) {
+
+      // headerAccessor 에서 sessionID와 albumID 추출
+      String sessionID = headerAccessor.getSessionId();
+      String albumID = headerAccessor.getDestination().split("/")[3];
+
+      // sessionID에 구독 albumID를 경로를 업데이트
+      WebSocketSessionHolder.updateSessionWithDestination(sessionID, albumID);
     }
 
     return message;
