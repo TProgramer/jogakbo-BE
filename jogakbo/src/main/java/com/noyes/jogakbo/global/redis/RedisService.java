@@ -28,4 +28,14 @@ public class RedisService {
 
     return objectMapper.readValue(redisValue, classType);
   }
+
+  /**
+   * Album data of albumID will be removed in redis.
+   * 
+   * @param
+   */
+  public void removeAlbumRedisValue(String albumID) {
+
+    redisTemplate.delete(albumID);
+  }
 }
