@@ -2,6 +2,7 @@ package com.noyes.jogakbo.global.websocket;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -15,7 +16,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.noyes.jogakbo.album.Album;
+import com.noyes.jogakbo.album.AlbumService;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.jwt.PasswordUtil;
 
@@ -30,6 +34,7 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
   private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
   private final JwtService jwtService;
+  private final AlbumService albumService;
 
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -59,9 +64,14 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
     } else if (headerAccessor.getCommand() == StompCommand.SUBSCRIBE) {
 
-      // headerAccessor 에서 sessionID와 albumID 추출
+      // headerAccessor 에서 sessionID와 albumID, 유저 socialID 추출
       String sessionID = headerAccessor.getSessionId();
       String albumID = headerAccessor.getDestination().split("/")[3];
+      String socialID = headerAccessor.getUser().getName();
+
+      // 유저가 albumEditors 에 포함되어 있는지 검증
+      if (!albumService.validAlbumEditor(albumID, socialID))
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 존재하지 않습니다.");
 
       // sessionID에 구독 albumID를 경로를 업데이트
       WebSocketSessionHolder.updateSessionWithDestination(sessionID, albumID);
