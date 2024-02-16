@@ -97,7 +97,7 @@ public class AlbumService {
       throws JsonProcessingException {
 
     // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
-    List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles);
+    List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles, albumID);
 
     ObjectMapper objectMapper = new ObjectMapper();
     List<ImageInfo> imageInfos = objectMapper.readValue(fileInfos, new TypeReference<List<ImageInfo>>() {
@@ -144,7 +144,7 @@ public class AlbumService {
     }
     redisService.setAlbumRedisValue(albumID, targetInfo);
 
-    awsS3Service.deleteFile(imageUUID);
+    awsS3Service.deleteFile(imageUUID, albumID);
 
     return imagesInfo;
   }
@@ -208,7 +208,7 @@ public class AlbumService {
     if (thumnailImage != null && !thumnailImage.getOriginalFilename().equals(thumbnailOriginalName)) {
 
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 받아오기
-      String uploadFileName = awsS3Service.uploadFile(thumnailImage);
+      String uploadFileName = awsS3Service.uploadFile(thumnailImage, albumID);
 
       album.setThumbnailImage(uploadFileName);
       album.setThumbnailOriginalName(thumbnailOriginalName);
@@ -244,7 +244,7 @@ public class AlbumService {
     for (List<ImagesInPage> imagesInfoOfIndex : imagesInfo) {
       for (ImagesInPage imageInfo : imagesInfoOfIndex) {
 
-        awsS3Service.deleteFile(imageInfo.getImageUUID());
+        awsS3Service.deleteFile(imageInfo.getImageUUID(), albumID);
       }
     }
 
