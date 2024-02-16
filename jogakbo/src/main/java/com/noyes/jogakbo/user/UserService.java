@@ -517,7 +517,7 @@ public class UserService {
     if (profileImage != null && !profileImageOriginalName.equals(profileImage.getOriginalFilename())) {
 
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
-      String uploadFileName = awsS3Service.uploadFile(profileImage);
+      String uploadFileName = awsS3Service.uploadFile(profileImage, socialID);
 
       user.setProfileImageUrl(uploadFileName);
       user.setProfileImageOriginalName(profileImageOriginalName);
