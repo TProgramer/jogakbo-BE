@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.jwt.PasswordUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FilterChannelInterceptor implements ChannelInterceptor {
 
   private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
+  private final JwtService jwtService;
 
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -36,15 +38,16 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
     assert headerAccessor != null;
     if (headerAccessor.getCommand() == StompCommand.CONNECT) {
 
+      // 담겨있는 유저 socialID가 유효한 지 검증 후 추출
       String token = String.valueOf(headerAccessor.getNativeHeader("Authorization").get(0));
-      log.info("소켓 접속 요청 token 값 확인 : " + token);
+      String socialID = jwtService.extractSocialId(token).get();
 
+      // 확인된 socialID 를 기반으로 세션 유저 설정
       String password = PasswordUtil.generateRandomPassword();
 
       UserDetails userDetailsUser = User.builder()
-          .username("myUser.getSocialId()")
+          .username(socialID)
           .password(password)
-          // .roles(myUser.getRole().name())
           .roles("USER")
           .build();
 
