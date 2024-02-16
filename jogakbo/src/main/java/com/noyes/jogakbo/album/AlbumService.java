@@ -253,4 +253,27 @@ public class AlbumService {
 
     return "앨범 삭제 작업을 완료했습니다.";
   }
+
+  /**
+   * 유저가 albumEditors 에 속해있는지 검증
+   * 
+   * @param albumID
+   * @param socialID
+   * @return
+   */
+  public Boolean validAlbumEditor(String albumID, String socialID) {
+
+    // DB에서 albumID로 Album 객체 접근 후, albumEditors 필드 추출
+    List<String> albumEditors = albumRepository.findById(albumID).get().getAlbumEditors();
+
+    // 순회를 돌며 인자로 받은 socialID가 List에 포함되어 있다면 true를 반환
+    for (String albumEditor : albumEditors) {
+
+      if (albumEditor.equals(socialID))
+        return true;
+    }
+
+    // List에 포함되어 있지 않았으므로 false를 반환
+    return false;
+  }
 }
