@@ -521,6 +521,9 @@ public class UserService {
 
       user.setProfileImageUrl(uploadFileName);
       user.setProfileImageOriginalName(profileImageOriginalName);
+
+      // 기존의 profileImage 삭제
+      awsS3Service.deleteFile(profileImageOriginalName, socialID);
     }
 
     userRepository.save(user);
