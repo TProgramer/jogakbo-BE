@@ -204,14 +204,18 @@ public class AlbumService {
       album.setAlbumName(newAlbumName);
 
     // 기존 thumbnailImage와 동일한지 확인 후 수정
-    String thumbnailOriginalName = album.getThumbnailOriginalName();
-    if (thumnailImage != null && !thumnailImage.getOriginalFilename().equals(thumbnailOriginalName)) {
+    String oldThumbnailOriginalName = album.getThumbnailOriginalName();
+
+    if (thumnailImage != null && !thumnailImage.getOriginalFilename().equals(oldThumbnailOriginalName)) {
 
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 받아오기
       String uploadFileName = awsS3Service.uploadFile(thumnailImage, albumID);
 
       album.setThumbnailImage(uploadFileName);
-      album.setThumbnailOriginalName(thumbnailOriginalName);
+      album.setThumbnailOriginalName(thumnailImage.getOriginalFilename());
+
+      // 기존 thumbnailImage 삭제
+      awsS3Service.deleteFile(oldThumbnailOriginalName, albumID);
     }
 
     albumRepository.save(album);
