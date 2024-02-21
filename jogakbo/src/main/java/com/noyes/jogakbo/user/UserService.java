@@ -519,8 +519,12 @@ public class UserService {
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
       String uploadFileName = awsS3Service.uploadFile(profileImage, socialID);
 
+      // 새로운 profileImage 정보로 User entity 업데이트
       user.setProfileImageUrl(uploadFileName);
-      user.setProfileImageOriginalName(profileImageOriginalName);
+      user.setProfileImageOriginalName(profileImage.getOriginalFilename());
+
+      // 기존의 profileImage 삭제
+      awsS3Service.deleteFile(profileImageOriginalName, socialID);
     }
 
     userRepository.save(user);
