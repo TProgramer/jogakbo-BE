@@ -267,8 +267,16 @@ public class AlbumService {
    */
   public Boolean validAlbumEditor(String albumID, String socialID) {
 
-    // DB에서 albumID로 Album 객체 접근 후, albumEditors 필드 추출
-    List<String> albumEditors = albumRepository.findById(albumID).get().getAlbumEditors();
+    // DB에서 albumID로 Album 객체 접근 후, albumOwner와 albumEditors 필드 추출
+    Album album = albumRepository.findById(albumID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범입니다."));
+
+    String albumOwnerID = album.getAlbumOwner();
+    List<String> albumEditors = album.getAlbumEditors();
+
+    // albumOwner 인 경우, true 반환
+    if (albumOwnerID.equals(socialID))
+      return true;
 
     // 순회를 돌며 인자로 받은 socialID가 List에 포함되어 있다면 true를 반환
     for (String albumEditor : albumEditors) {

@@ -8,6 +8,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
@@ -18,15 +19,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.album.AlbumService;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.jwt.PasswordUtil;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE + 99)
 @Component
 @RequiredArgsConstructor
@@ -38,14 +36,16 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel channel) {
-    StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
+
+    StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
     assert headerAccessor != null;
     if (headerAccessor.getCommand() == StompCommand.CONNECT) {
 
       // 담겨있는 유저 socialID가 유효한 지 검증 후 추출
       String token = String.valueOf(headerAccessor.getNativeHeader("Authorization").get(0));
-      String socialID = jwtService.extractSocialId(token).get();
+      String socialID = jwtService.extractSocialId(token.replace("Bearer ", ""))
+          .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유저 인증에 실패하였습니다."));
 
       // 확인된 socialID 를 기반으로 세션 유저 설정
       String password = PasswordUtil.generateRandomPassword();
