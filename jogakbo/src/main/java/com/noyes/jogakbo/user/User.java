@@ -35,7 +35,7 @@ public class User {
   // field for collaboration albums list
   private List<Album> collaboAlbums;
   // field for recieved invitation from album owner
-  private List<Album> recievedAlbumInvitations;
+  private List<Album> receivedAlbumInvitations;
 
   @DocumentReference(lazy = true)
   private List<Album> albums;
