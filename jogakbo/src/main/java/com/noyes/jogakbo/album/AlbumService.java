@@ -288,4 +288,51 @@ public class AlbumService {
     // List에 포함되어 있지 않았으므로 false를 반환
     return false;
   }
+
+  /**
+   * collaboUserID에 해당하는 유저에게 앨범 초대 보내기
+   * 
+   * @param
+   * @return
+   */
+  public Album sendAlbumInvitation(String albumID, String collaboUserID, String socialID) {
+
+    // 요청자가 album의 소유자인지 검증
+    Album album = albumRepository.findById(albumID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+
+    // 이미 요청을 보낸 대상일 경우 예외처리
+    List<String> sentAlbumInvitations = album.getSentAlbumInvitations();
+
+    if (isUserInList(sentAlbumInvitations, collaboUserID) != null)
+      return null;
+
+    // 이미 초대된 경우도 예외처리
+    List<String> albumEditors = album.getAlbumEditors();
+    if (isUserInList(albumEditors, collaboUserID) != null)
+      return null;
+
+    // 앨범 초대 리스트에 등록
+    sentAlbumInvitations.add(collaboUserID);
+    userService.addReceivedAlbumInvitations(collaboUserID, album);
+
+    albumRepository.save(album);
+
+    return album;
+  }
+
+  /**
+   * List에 collaboUserID가 존재하는지 판별
+   * 
+   * @param
+   */
+  public String isUserInList(List<String> stringList, String socialID) {
+
+    for (String stringPiece : stringList) {
+
+      if (stringPiece.equals(socialID))
+        return stringPiece;
+    }
+    return null;
+  }
 }
