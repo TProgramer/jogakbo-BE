@@ -531,4 +531,20 @@ public class UserService {
 
     return "프로필을 성공적으로 변경했습니다.";
   }
+
+  /**
+   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * 
+   * @param collaboUserID
+   * @param album
+   */
+  public void addReceivedAlbumInvitations(@NonNull String collaboUserID, Album album) {
+
+    User user = userRepository.findById(collaboUserID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
+
+    user.getReceivedAlbumInvitations().add(album);
+
+    userRepository.save(user);
+  }
 }
