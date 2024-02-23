@@ -159,4 +159,14 @@ public class AlbumController {
 
     return ResponseEntity.ok(result);
   }
+
+  @Operation(description = "앨범 초대 응답 엔드포인트입니다. reply 파라미터의 값이 accept 면 앨범에 참여하게 됩니다.")
+  @PostMapping("/invitation-reply/{albumID}")
+  public ResponseEntity<String> replyAlbumInvitation(@PathVariable String albumID, @RequestParam String reply,
+      Principal principal) {
+
+    String res = albumService.replyAlbumInvitation(albumID, principal.getName(), reply);
+
+    return ResponseEntity.ok(res);
+  }
 }

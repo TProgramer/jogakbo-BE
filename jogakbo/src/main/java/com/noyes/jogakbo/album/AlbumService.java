@@ -20,6 +20,7 @@ import com.noyes.jogakbo.album.DTO.ImagesInPage;
 import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.global.websocket.WebSocketSessionHolder;
+import com.noyes.jogakbo.user.User;
 import com.noyes.jogakbo.user.UserService;
 
 import lombok.NonNull;
@@ -322,6 +323,62 @@ public class AlbumService {
   }
 
   /**
+   * 응답 메세지에 따라 앨범 작업자로 추가 후, 초대 요청 리스트에서 이전 요청 제거
+   * 
+   * @param albumID
+   * @param resUserID
+   * @param reply
+   * @return result in String
+   */
+  public String replyAlbumInvitation(@NonNull String albumID, @NonNull String resUserID, String reply) {
+
+    // 보낸|받은 요청 유효성 판별 변수 추가
+    boolean isValidRequest = true;
+
+    // 초대 요청을 보낸 앨범인지 확인
+    Album requestAlbum = albumRepository.findById(albumID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+
+    List<String> sentAlbumInvitations = requestAlbum.getSentAlbumInvitations();
+
+    String targetUser = isUserInList(sentAlbumInvitations, resUserID);
+
+    if (targetUser == null)
+      isValidRequest = false;
+
+    // 초대 요청을 받은 유저인지도 확인
+    User responseUser = userService.getUser(resUserID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 유저 ID 입니다."));
+
+    List<Album> receivedAlbumInvitations = responseUser.getReceivedAlbumInvitations();
+
+    Album callAlbum = isAlbumInList(receivedAlbumInvitations, albumID);
+
+    if (callAlbum == null)
+      isValidRequest = false;
+
+    // 서로의 요청, 승인 대기열에서 삭제
+    sentAlbumInvitations.remove(targetUser);
+    userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumID());
+
+    albumRepository.save(requestAlbum);
+
+    if (!isValidRequest)
+      return "더 이상 유효하지 않은 앨범 초대 요청입니다.";
+
+    // 서로의 목록에 추가
+    if (reply.equals("accept")) {
+
+      requestAlbum.getAlbumEditors().add(targetUser);
+      albumRepository.save(requestAlbum);
+
+      userService.addCollaboAlbum(resUserID, callAlbum);
+    }
+
+    return "요청이 성공적으로 반영되었습니다.";
+  }
+
+  /**
    * List에 collaboUserID가 존재하는지 판별
    * 
    * @param
@@ -332,6 +389,22 @@ public class AlbumService {
 
       if (stringPiece.equals(socialID))
         return stringPiece;
+    }
+    return null;
+  }
+
+  /**
+   * List에 동일한 albumID를 가지는 album이 존재하는지 판별
+   * 
+   * @param
+   * @return
+   */
+  public Album isAlbumInList(List<Album> albumList, String albumID) {
+
+    for (Album albumPiece : albumList) {
+
+      if (albumPiece.getAlbumID().equals(albumID))
+        return albumPiece;
     }
     return null;
   }
