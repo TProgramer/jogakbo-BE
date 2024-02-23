@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.EditMessage;
 import com.noyes.jogakbo.album.DTO.EntryMessage;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
+import com.noyes.jogakbo.global.SseEmitters;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +41,7 @@ public class AlbumController {
 
   private final AlbumService albumService;
   private final SimpMessagingTemplate simpMessageTemplate;
+  private final SseEmitters sseEmitters;
 
   @Operation(description = "앨범 등록 메서드입니다.")
   @PostMapping()
@@ -141,5 +143,20 @@ public class AlbumController {
     log.info("albumID : " + albumID);
 
     return payload;
+  }
+
+  @Operation(description = "앨범 초대 메서드입니다.")
+  @PostMapping("/invitation/{albumID}/{socialID}")
+  public ResponseEntity<String> sendAlbumInvitation(@PathVariable String albumID, @PathVariable String collaboUserID,
+      Principal principal) {
+
+    Album album = albumService.sendAlbumInvitation(albumID, collaboUserID, principal.getName());
+
+    if (album == null)
+      return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
+
+    String result = sseEmitters.sendAlbumInvitation(collaboUserID, album);
+
+    return ResponseEntity.ok(result);
   }
 }
