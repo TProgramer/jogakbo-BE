@@ -146,7 +146,7 @@ public class AlbumController {
   }
 
   @Operation(description = "앨범 초대 메서드입니다.")
-  @PostMapping("/invitation/{albumID}/{socialID}")
+  @PostMapping("/invitation/{albumID}/{collaboUserID}")
   public ResponseEntity<String> sendAlbumInvitation(@PathVariable String albumID, @PathVariable String collaboUserID,
       Principal principal) {
 
