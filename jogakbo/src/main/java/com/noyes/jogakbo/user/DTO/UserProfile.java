@@ -17,4 +17,6 @@ public class UserProfile {
   private List<Friend> sentFriendRequest;
   private List<Friend> receivedFriendRequest;
   private List<Album> albums;
+  private List<Album> collaboAlbums;
+  private List<Album> receivedAlbumInvitations;
 }

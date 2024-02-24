@@ -263,6 +263,8 @@ public class UserService {
         .sentFriendRequest(user.getSentFriendRequests())
         .receivedFriendRequest(user.getReceivedFriendRequests())
         .albums(user.getAlbums())
+        .collaboAlbums(user.getCollaboAlbums())
+        .receivedAlbumInvitations(user.getReceivedAlbumInvitations())
         .build();
   }
 
