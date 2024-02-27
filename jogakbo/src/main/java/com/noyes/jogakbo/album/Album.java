@@ -21,17 +21,15 @@ public class Album {
 
   @Id
   private String albumID;
-
   private String albumName;
-
   private String thumbnailImage;
   private String thumbnailOriginalName;
-
   private List<List<ImagesInPage>> images;
-
   private String albumOwner;
-
+  // field for album co-workers list
   private List<String> albumEditors;
+  // field for invited user list
+  private List<String> sentAlbumInvitations;
 
   @Version
   private int version;

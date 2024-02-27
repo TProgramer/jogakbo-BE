@@ -263,6 +263,8 @@ public class UserService {
         .sentFriendRequest(user.getSentFriendRequests())
         .receivedFriendRequest(user.getReceivedFriendRequests())
         .albums(user.getAlbums())
+        .collaboAlbums(user.getCollaboAlbums())
+        .receivedAlbumInvitations(user.getReceivedAlbumInvitations())
         .build();
   }
 
@@ -530,5 +532,54 @@ public class UserService {
     userRepository.save(user);
 
     return "프로필을 성공적으로 변경했습니다.";
+  }
+
+  /**
+   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * 
+   * @param collaboUserID
+   * @param album
+   */
+  public void addReceivedAlbumInvitations(@NonNull String collaboUserID, Album album) {
+
+    User user = userRepository.findById(collaboUserID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
+
+    user.getReceivedAlbumInvitations().add(album);
+
+    userRepository.save(user);
+  }
+
+  /**
+   * resUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에서 albumID에 해당하는 album
+   * 제거
+   * 
+   * @param collaboUserID
+   * @param album
+   */
+  public void removeAlbumInvitation(@NonNull String resUserID, String albumID) {
+
+    User user = userRepository.findById(resUserID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
+
+    user.getReceivedAlbumInvitations().removeIf(album -> album.getAlbumID().equals(albumID));
+
+    userRepository.save(user);
+  }
+
+  /**
+   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * 
+   * @param collaboUserID
+   * @param album
+   */
+  public void addCollaboAlbum(@NonNull String collaboUserID, Album album) {
+
+    User user = userRepository.findById(collaboUserID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
+
+    user.getCollaboAlbums().add(album);
+
+    userRepository.save(user);
   }
 }

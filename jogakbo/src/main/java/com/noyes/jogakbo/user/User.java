@@ -32,6 +32,10 @@ public class User {
   private List<Friend> friends;
   private List<Friend> sentFriendRequests;
   private List<Friend> receivedFriendRequests;
+  // field for collaboration albums list
+  private List<Album> collaboAlbums;
+  // field for recieved invitation from album owner
+  private List<Album> receivedAlbumInvitations;
 
   @DocumentReference(lazy = true)
   private List<Album> albums;
