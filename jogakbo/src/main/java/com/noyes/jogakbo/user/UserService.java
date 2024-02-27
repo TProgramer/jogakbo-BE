@@ -24,6 +24,7 @@ import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.FriendSearchResult;
 import com.noyes.jogakbo.user.DTO.FriendStatus;
+import com.noyes.jogakbo.user.DTO.UserInfo;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 @Slf4j
@@ -243,6 +244,26 @@ public class UserService {
   public Optional<User> getUser(@NonNull String socialID) {
 
     return userRepository.findById(socialID);
+  }
+
+  /**
+   * socialID 에 해당하는 UserInfo 반환
+   * JPA Repository의 findBy Method를 사용하여 특정 User를 조회
+   * find 메소드는 NULL 값일 수도 있으므로 Optional<T>를 반환하지만,
+   * Optional 객체의 get() 메소드를 통해 Entity로 변환해서 반환함.
+   * 
+   * @param
+   * @return
+   */
+  public UserInfo getUserInfo(@NonNull String socialID) {
+
+    User user = userRepository.findById(socialID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지않은 유저 ID 입니다."));
+
+    return UserInfo.builder()
+        .socialID(user.getSocialID())
+        .nickname(user.getNickname())
+        .profileImageURL(user.getProfileImageUrl()).build();
   }
 
   /**

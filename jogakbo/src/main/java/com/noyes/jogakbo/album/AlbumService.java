@@ -22,6 +22,7 @@ import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.global.websocket.WebSocketSessionHolder;
 import com.noyes.jogakbo.user.User;
 import com.noyes.jogakbo.user.UserService;
+import com.noyes.jogakbo.user.DTO.UserInfo;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,23 @@ public class AlbumService {
     if (!albumOwner.equals(socialID) && !albumEditors.contains(socialID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범을 조회할 권한이 없습니다.");
 
+    // 앨범 주인과 공동 작업자들의 정보 추출
+    UserInfo albumOwnerInfo = userService.getUserInfo(albumOwner);
+    List<UserInfo> albumEditorsInfo = new ArrayList<>();
+
+    for (String albumEditor : albumEditors) {
+
+      albumEditorsInfo.add(userService.getUserInfo(albumEditor));
+    }
+
+    // 앨범에 초대된 유저 정보 추출
+    List<String> sentAlbumInvitations = album.getSentAlbumInvitations();
+    List<UserInfo> sentAlbumInvitationsInfo = new ArrayList<>();
+    for (String sentAlbumInvitation : sentAlbumInvitations) {
+
+      sentAlbumInvitationsInfo.add(userService.getUserInfo(sentAlbumInvitation));
+    }
+
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
     List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
 
@@ -57,6 +75,9 @@ public class AlbumService {
         .imagesInfo(imagesInfo)
         .thumbnailImage(album.getThumbnailImage())
         .createdDate(album.getCreatedDate())
+        .albumOwnerInfo(albumOwnerInfo)
+        .albumEditorsInfo(albumEditorsInfo)
+        .sentAlbumInvitationsInfo(sentAlbumInvitationsInfo)
         .build();
   }
 
