@@ -3,7 +3,7 @@ package com.noyes.jogakbo.album.DTO;
 import lombok.Data;
 
 @Data
-public class EditMessage {
+public class AlbumImageEditMessage {
 
   private String imageUUID;
   private ImageInfo imageInfo;

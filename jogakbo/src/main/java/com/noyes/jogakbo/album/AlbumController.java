@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.noyes.jogakbo.album.DTO.EditMessage;
+import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.EntryMessage;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
 import com.noyes.jogakbo.global.SseEmitters;
@@ -106,7 +106,7 @@ public class AlbumController {
   @Operation(description = "공동 작업을 위한 웹소켓 메소드 입니다.")
   @MessageMapping("/edit/{albumID}")
   @SendTo("/sub/edit/{albumID}")
-  public List<List<ImagesInPage>> editImage(@DestinationVariable String albumID, List<EditMessage> payload)
+  public List<List<ImagesInPage>> editImage(@DestinationVariable String albumID, List<AlbumImageEditMessage> payload)
       throws Exception {
 
     log.info("albumID : " + albumID);

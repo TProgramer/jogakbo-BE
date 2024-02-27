@@ -13,7 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.noyes.jogakbo.album.DTO.EditMessage;
+import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.EntryMessage;
 import com.noyes.jogakbo.album.DTO.ImageInfo;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
@@ -180,12 +180,13 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> editImage(String albumID, List<EditMessage> payload) throws JsonProcessingException {
+  public List<List<ImagesInPage>> editImage(String albumID, List<AlbumImageEditMessage> payload)
+      throws JsonProcessingException {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
     List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
 
-    for (EditMessage target : payload) {
+    for (AlbumImageEditMessage target : payload) {
 
       int pageNum = target.getImageInfo().getPage();
       List<ImagesInPage> targetPageInfo = imagesInfo.get(pageNum);
