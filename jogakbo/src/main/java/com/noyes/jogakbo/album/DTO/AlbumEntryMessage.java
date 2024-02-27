@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class EntryMessage {
+public class AlbumEntryMessage {
 
   private String albumName;
   private List<List<ImagesInPage>> imagesInfo;

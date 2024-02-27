@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
-import com.noyes.jogakbo.album.DTO.EntryMessage;
+import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
 import com.noyes.jogakbo.global.SseEmitters;
 
@@ -56,7 +56,7 @@ public class AlbumController {
 
   @Operation(description = "특정 앨범 정보 조회 메서드입니다.")
   @GetMapping()
-  public ResponseEntity<EntryMessage> getAlbumInfo(@RequestParam String albumID, Principal principal)
+  public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@RequestParam String albumID, Principal principal)
       throws JsonProcessingException {
 
     return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumID));
