@@ -39,7 +39,16 @@ public class AlbumService {
 
   public EntryMessage getEntryMessage(String socialID, String albumID) throws JsonProcessingException {
 
-    Album album = userService.getAlbumByUser(socialID, albumID);
+    // 앨범 ID로 앨범 가져오기
+    Album album = albumRepository.findById(albumID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 앨범 ID 입니다."));
+
+    // 앨범 주인이거나 공동 작업자인지 확인
+    String albumOwner = album.getAlbumOwner();
+    List<String> albumEditors = album.getAlbumEditors();
+    if (!albumOwner.equals(socialID) && !albumEditors.contains(socialID))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범을 조회할 권한이 없습니다.");
+
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
     List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
 
