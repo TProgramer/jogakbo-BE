@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class AlbumImageEditMessage {
 
-  private String imageUUID;
-  private AlbumImageInfo imageInfo;
+  private String albumImageUUID;
+  private AlbumImageInfo albumImageEditInfo;
 }

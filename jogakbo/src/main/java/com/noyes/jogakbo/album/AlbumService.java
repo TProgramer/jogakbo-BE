@@ -188,17 +188,17 @@ public class AlbumService {
 
     for (AlbumImageEditMessage target : payload) {
 
-      int pageNum = target.getImageInfo().getPage();
+      int pageNum = target.getAlbumImageEditInfo().getPage();
       List<ImagesInPage> targetPageInfo = imagesInfo.get(pageNum);
 
       // To-Do: imageUUID가 같은지 확인하는 효율적인 로직 찾아보기
       for (ImagesInPage tmp : targetPageInfo) {
 
-        if (tmp.getImageUUID().equals(target.getImageUUID())) {
+        if (tmp.getImageUUID().equals(target.getAlbumImageUUID())) {
 
-          tmp.setLocation(target.getImageInfo().getLocation());
-          tmp.setSize(target.getImageInfo().getSize());
-          tmp.setRotation(target.getImageInfo().getRotation());
+          tmp.setLocation(target.getAlbumImageEditInfo().getLocation());
+          tmp.setSize(target.getAlbumImageEditInfo().getSize());
+          tmp.setRotation(target.getAlbumImageEditInfo().getRotation());
 
           targetPageInfo.add(tmp);
           targetPageInfo.remove(tmp);
