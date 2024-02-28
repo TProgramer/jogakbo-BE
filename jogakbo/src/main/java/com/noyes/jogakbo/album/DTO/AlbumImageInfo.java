@@ -13,7 +13,7 @@ public class AlbumImageInfo {
 
   // private MessageType type; // 메시지 타입
   private String imageUUID;
-  private ImageSize size;
+  private AlbumImageSizeInfo size;
   private AlbumImageLocationInfo location;
   private double rotation;
 }

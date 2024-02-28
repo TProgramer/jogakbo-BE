@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 public class AlbumImageEditInfo {
 
   private int page;
-  private ImageSize size;
+  private AlbumImageSizeInfo size;
   private AlbumImageLocationInfo location;
   private double rotation;
 }

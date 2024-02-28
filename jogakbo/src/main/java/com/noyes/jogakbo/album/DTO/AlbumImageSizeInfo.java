@@ -3,7 +3,7 @@ package com.noyes.jogakbo.album.DTO;
 import lombok.Data;
 
 @Data
-public class ImageSize {
+public class AlbumImageSizeInfo {
 
   private double width;
   private double height;
