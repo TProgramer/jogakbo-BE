@@ -54,20 +54,12 @@ public class AlbumController {
     return ResponseEntity.ok(newAlbumID);
   }
 
-  @Operation(description = "특정 앨범 정보 조회 메서드입니다.")
+  @Operation(description = "앨범 프로필 정보 조회 메서드입니다.")
   @GetMapping()
   public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@RequestParam String albumID, Principal principal)
       throws JsonProcessingException {
 
     return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumID));
-  }
-
-  @Operation(description = "유저 소유의 전체 앨범 조회 메서드입니다.")
-  @GetMapping("/list")
-  public ResponseEntity<List<Album>> album(Principal principal) {
-
-    List<Album> albums = albumService.getAllAlbumByUser(principal.getName());
-    return ResponseEntity.ok(albums);
   }
 
   @Operation(description = "앨범 페이지 추가 메서드입니다.")

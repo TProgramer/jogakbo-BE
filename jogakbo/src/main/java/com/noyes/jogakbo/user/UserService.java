@@ -175,11 +175,6 @@ public class UserService {
     return null;
   }
 
-  public List<Album> getAlbumsByUser(@NonNull String socialID) {
-
-    return userRepository.findById(socialID).get().getAlbums();
-  }
-
   public void addAlbum(Album newAlbum, @NonNull String socialID) {
 
     User targetUser = userRepository.findById(socialID).get();

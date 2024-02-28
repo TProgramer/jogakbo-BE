@@ -81,11 +81,6 @@ public class AlbumService {
         .build();
   }
 
-  public List<Album> getAllAlbumByUser(String socialID) {
-
-    return userService.getAlbumsByUser(socialID);
-  }
-
   public String createAlbum(String albumName, String socialID) throws JsonProcessingException {
 
     String albumID = UUID.randomUUID().toString();
