@@ -95,7 +95,7 @@ public class AlbumService {
     Album newAlbum = Album.builder()
         .albumID(albumID)
         .albumName(albumName)
-        .images(blankImagesProp)
+        .albumImages(blankImagesProp)
         .albumOwner(socialID)
         .albumEditors(new ArrayList<>())
         .build();

@@ -19,18 +19,23 @@ import lombok.Data;
 @Document(collection = "album")
 public class Album {
 
+  // field with randomUUID for unique key
   @Id
   private String albumID;
   private String albumName;
+  // field presents image path in AWS S3
   private String thumbnailImage;
+  // field to recognize image update
   private String thumbnailOriginalName;
-  private List<List<AlbumImageInfo>> images;
+  private List<List<AlbumImageInfo>> albumImages;
+  // field with socialID in String value
   private String albumOwner;
   // field for album co-workers list
   private List<String> albumEditors;
   // field for invited user list
   private List<String> sentAlbumInvitations;
 
+  // check flag to use @CreatedDate, @LastModified annotation with custom PK
   @Version
   private int version;
 
