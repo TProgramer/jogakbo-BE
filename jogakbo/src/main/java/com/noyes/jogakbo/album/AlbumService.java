@@ -98,6 +98,7 @@ public class AlbumService {
         .images(blankImagesProp)
         .albumOwner(socialID)
         .albumEditors(new ArrayList<>())
+        .sentAlbumInvitations(new ArrayList<>())
         .build();
 
     albumRepository.save(newAlbum);
