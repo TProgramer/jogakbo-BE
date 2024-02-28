@@ -6,5 +6,5 @@ import lombok.Data;
 public class AlbumImageEditMessage {
 
   private String imageUUID;
-  private ImageInfo imageInfo;
+  private AlbumImageInfo imageInfo;
 }
