@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class AlbumImageInfo {
+public class AlbumImageEditInfo {
 
   private int page;
   private ImageSize size;

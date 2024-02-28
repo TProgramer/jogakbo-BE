@@ -15,7 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
-import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
+import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.ImagesInPage;
 import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
@@ -131,8 +131,9 @@ public class AlbumService {
     List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles, albumID);
 
     ObjectMapper objectMapper = new ObjectMapper();
-    List<AlbumImageInfo> imageInfos = objectMapper.readValue(fileInfos, new TypeReference<List<AlbumImageInfo>>() {
-    });
+    List<AlbumImageEditInfo> imageInfos = objectMapper.readValue(fileInfos,
+        new TypeReference<List<AlbumImageEditInfo>>() {
+        });
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
     List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
