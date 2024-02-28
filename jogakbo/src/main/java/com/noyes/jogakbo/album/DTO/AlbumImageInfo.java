@@ -9,6 +9,6 @@ public class AlbumImageInfo {
 
   private int page;
   private ImageSize size;
-  private ImageLocation location;
+  private AlbumImageLocationInfo location;
   private double rotation;
 }

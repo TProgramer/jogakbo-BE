@@ -14,6 +14,6 @@ public class ImagesInPage {
   // private MessageType type; // 메시지 타입
   private String imageUUID;
   private ImageSize size;
-  private ImageLocation location;
+  private AlbumImageLocationInfo location;
   private double rotation;
 }
