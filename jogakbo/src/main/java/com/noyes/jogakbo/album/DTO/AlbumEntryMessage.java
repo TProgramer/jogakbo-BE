@@ -13,7 +13,7 @@ import lombok.Data;
 public class AlbumEntryMessage {
 
   private String albumName;
-  private List<List<ImagesInPage>> imagesInfo;
+  private List<List<AlbumImageInfo>> imagesInfo;
   private String thumbnailImage;
   private LocalDateTime createdDate;
   private UserInfo albumOwnerInfo;

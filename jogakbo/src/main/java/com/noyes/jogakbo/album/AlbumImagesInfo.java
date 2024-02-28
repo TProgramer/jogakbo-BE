@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.redis.core.RedisHash;
 
-import com.noyes.jogakbo.album.DTO.ImagesInPage;
+import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,5 +20,5 @@ public class AlbumImagesInfo {
   @Id
   private String id;
 
-  private List<List<ImagesInPage>> imagesInfo;
+  private List<List<AlbumImageInfo>> imagesInfo;
 }

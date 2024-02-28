@@ -9,7 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.noyes.jogakbo.album.DTO.ImagesInPage;
+import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +24,7 @@ public class Album {
   private String albumName;
   private String thumbnailImage;
   private String thumbnailOriginalName;
-  private List<List<ImagesInPage>> images;
+  private List<List<AlbumImageInfo>> images;
   private String albumOwner;
   // field for album co-workers list
   private List<String> albumEditors;

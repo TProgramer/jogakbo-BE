@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class ImagesInPage {
+public class AlbumImageInfo {
   // 메시지 타입 : 입장, 채팅, 나감
   // public enum MessageType {
   // ENTER, EDIT, TALK, QUIT

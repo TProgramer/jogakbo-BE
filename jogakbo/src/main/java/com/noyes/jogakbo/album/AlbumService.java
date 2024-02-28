@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
-import com.noyes.jogakbo.album.DTO.ImagesInPage;
+import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.global.websocket.WebSocketSessionHolder;
@@ -68,7 +68,7 @@ public class AlbumService {
     }
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
     return AlbumEntryMessage.builder()
         .albumName(album.getAlbumName())
@@ -89,7 +89,7 @@ public class AlbumService {
   public String createAlbum(String albumName, String socialID) throws JsonProcessingException {
 
     String albumID = UUID.randomUUID().toString();
-    List<List<ImagesInPage>> blankImagesProp = new ArrayList<>();
+    List<List<AlbumImageInfo>> blankImagesProp = new ArrayList<>();
     blankImagesProp.add(new ArrayList<>());
 
     Album newAlbum = Album.builder()
@@ -114,17 +114,17 @@ public class AlbumService {
     return albumID;
   }
 
-  public List<List<ImagesInPage>> addNewPage(String albumID) throws JsonProcessingException {
+  public List<List<AlbumImageInfo>> addNewPage(String albumID) throws JsonProcessingException {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
     imagesInfo.add(new ArrayList<>());
     redisService.setAlbumRedisValue(albumID, targetInfo);
 
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> uploadImages(String albumID, List<MultipartFile> multipartFiles, String fileInfos)
+  public List<List<AlbumImageInfo>> uploadImages(String albumID, List<MultipartFile> multipartFiles, String fileInfos)
       throws JsonProcessingException {
 
     // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
@@ -136,13 +136,13 @@ public class AlbumService {
         });
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
     for (int i = 0; i < uploadFileNames.size(); i++) {
 
       int pageNum = imageInfos.get(i).getPage();
-      List<ImagesInPage> targetPageInfo = imagesInfo.get(pageNum);
-      ImagesInPage tmp = ImagesInPage.builder()
+      List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
+      AlbumImageInfo tmp = AlbumImageInfo.builder()
           .imageUUID(uploadFileNames.get(i))
           .size(imageInfos.get(i).getSize())
           .location(imageInfos.get(i).getLocation())
@@ -159,14 +159,14 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> unloadImage(String albumID, int pageNum, String imageUUID)
+  public List<List<AlbumImageInfo>> unloadImage(String albumID, int pageNum, String imageUUID)
       throws JsonProcessingException {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
-    List<ImagesInPage> targetList = imagesInfo.get(pageNum);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
+    List<AlbumImageInfo> targetList = imagesInfo.get(pageNum);
 
-    for (ImagesInPage tmp : targetList) {
+    for (AlbumImageInfo tmp : targetList) {
 
       if (tmp.getImageUUID().equals(imageUUID)) {
 
@@ -181,19 +181,19 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> editImage(String albumID, List<AlbumImageEditMessage> payload)
+  public List<List<AlbumImageInfo>> editImage(String albumID, List<AlbumImageEditMessage> payload)
       throws JsonProcessingException {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
     for (AlbumImageEditMessage target : payload) {
 
       int pageNum = target.getAlbumImageEditInfo().getPage();
-      List<ImagesInPage> targetPageInfo = imagesInfo.get(pageNum);
+      List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
 
       // To-Do: imageUUID가 같은지 확인하는 효율적인 로직 찾아보기
-      for (ImagesInPage tmp : targetPageInfo) {
+      for (AlbumImageInfo tmp : targetPageInfo) {
 
         if (tmp.getImageUUID().equals(target.getAlbumImageUUID())) {
 
@@ -272,14 +272,14 @@ public class AlbumService {
     WebSocketSessionHolder.closeSessionByDestination(albumID);
 
     // 최신 데이터를 참조하기 위해 redis를 기준으로 이미지 정보 불러오기
-    List<List<ImagesInPage>> imagesInfo = redisService
+    List<List<AlbumImageInfo>> imagesInfo = redisService
         .getAlbumRedisValue(albumID, AlbumImagesInfo.class)
         .getImagesInfo();
 
     // 앨범에 업로드된 이미지들을 순회하며 S3 이미지 삭제
     // To-do: S3 SDK의 deleteObjects 메소드로 한번에 삭제 방식으로 전환 및 예외처리 추가
-    for (List<ImagesInPage> imagesInfoOfIndex : imagesInfo) {
-      for (ImagesInPage imageInfo : imagesInfoOfIndex) {
+    for (List<AlbumImageInfo> imagesInfoOfIndex : imagesInfo) {
+      for (AlbumImageInfo imageInfo : imagesInfoOfIndex) {
 
         awsS3Service.deleteFile(imageInfo.getImageUUID(), albumID);
       }

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
-import com.noyes.jogakbo.album.DTO.ImagesInPage;
+import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.global.SseEmitters;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,7 +75,7 @@ public class AlbumController {
   public ResponseEntity<String> createPage(@PathVariable String albumID, Principal principal)
       throws JsonMappingException, JsonProcessingException {
 
-    List<List<ImagesInPage>> imagesInfo = albumService.addNewPage(albumID);
+    List<List<AlbumImageInfo>> imagesInfo = albumService.addNewPage(albumID);
     simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
     return ResponseEntity.ok("페이지를 성공적으로 추가했습니다.");
   }
@@ -86,7 +86,7 @@ public class AlbumController {
       @RequestPart List<MultipartFile> multipartFiles,
       @RequestParam String fileInfos) throws JsonProcessingException {
 
-    List<List<ImagesInPage>> imagesInfo = albumService.uploadImages(albumID, multipartFiles, fileInfos);
+    List<List<AlbumImageInfo>> imagesInfo = albumService.uploadImages(albumID, multipartFiles, fileInfos);
     simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
 
     return ResponseEntity.ok("사진을 성공적으로 등록했습니다.");
@@ -97,7 +97,7 @@ public class AlbumController {
   public ResponseEntity<String> unloadImage(@PathVariable String albumID, @PathVariable int pageNum,
       @RequestParam String imageUUID) throws JsonProcessingException {
 
-    List<List<ImagesInPage>> imagesInfo = albumService.unloadImage(albumID, pageNum, imageUUID);
+    List<List<AlbumImageInfo>> imagesInfo = albumService.unloadImage(albumID, pageNum, imageUUID);
     simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
 
     return ResponseEntity.ok("이미지를 성공적으로 제외했습니다.");
@@ -106,7 +106,7 @@ public class AlbumController {
   @Operation(description = "공동 작업을 위한 웹소켓 메소드 입니다.")
   @MessageMapping("/edit/{albumID}")
   @SendTo("/sub/edit/{albumID}")
-  public List<List<ImagesInPage>> editImage(@DestinationVariable String albumID, List<AlbumImageEditMessage> payload)
+  public List<List<AlbumImageInfo>> editImage(@DestinationVariable String albumID, List<AlbumImageEditMessage> payload)
       throws Exception {
 
     log.info("albumID : " + albumID);
