@@ -140,7 +140,7 @@ public class AlbumService {
 
     for (int i = 0; i < uploadFileNames.size(); i++) {
 
-      int pageNum = imageInfos.get(i).getPage();
+      int pageNum = imageInfos.get(i).getPageNum();
       List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
       AlbumImageInfo tmp = AlbumImageInfo.builder()
           .imageUUID(uploadFileNames.get(i))
@@ -189,7 +189,7 @@ public class AlbumService {
 
     for (AlbumImageEditMessage target : payload) {
 
-      int pageNum = target.getAlbumImageEditInfo().getPage();
+      int pageNum = target.getAlbumImageEditInfo().getPageNum();
       List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
 
       // To-Do: imageUUID가 같은지 확인하는 효율적인 로직 찾아보기
