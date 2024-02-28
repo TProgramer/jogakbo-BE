@@ -143,7 +143,7 @@ public class AlbumService {
       int pageNum = imageInfos.get(i).getPageNum();
       List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
       AlbumImageInfo tmp = AlbumImageInfo.builder()
-          .imageUUID(uploadFileNames.get(i))
+          .albumImageUUID(uploadFileNames.get(i))
           .size(imageInfos.get(i).getSize())
           .location(imageInfos.get(i).getLocation())
           .rotation(imageInfos.get(i).getRotation())
@@ -168,7 +168,7 @@ public class AlbumService {
 
     for (AlbumImageInfo tmp : targetList) {
 
-      if (tmp.getImageUUID().equals(imageUUID)) {
+      if (tmp.getAlbumImageUUID().equals(imageUUID)) {
 
         targetList.remove(tmp);
         break;
@@ -195,7 +195,7 @@ public class AlbumService {
       // To-Do: imageUUID가 같은지 확인하는 효율적인 로직 찾아보기
       for (AlbumImageInfo tmp : targetPageInfo) {
 
-        if (tmp.getImageUUID().equals(target.getAlbumImageUUID())) {
+        if (tmp.getAlbumImageUUID().equals(target.getAlbumImageUUID())) {
 
           tmp.setLocation(target.getAlbumImageEditInfo().getLocation());
           tmp.setSize(target.getAlbumImageEditInfo().getSize());
@@ -281,7 +281,7 @@ public class AlbumService {
     for (List<AlbumImageInfo> imagesInfoOfIndex : imagesInfo) {
       for (AlbumImageInfo imageInfo : imagesInfoOfIndex) {
 
-        awsS3Service.deleteFile(imageInfo.getImageUUID(), albumID);
+        awsS3Service.deleteFile(imageInfo.getAlbumImageUUID(), albumID);
       }
     }
 
