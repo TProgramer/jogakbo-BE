@@ -1,4 +1,4 @@
-package com.noyes.jogakbo.album;
+package com.noyes.jogakbo.global.redis;
 
 import java.util.List;
 

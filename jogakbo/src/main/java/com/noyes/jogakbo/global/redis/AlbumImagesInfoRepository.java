@@ -1,4 +1,4 @@
-package com.noyes.jogakbo.album;
+package com.noyes.jogakbo.global.redis;
 
 import org.springframework.data.repository.CrudRepository;
 

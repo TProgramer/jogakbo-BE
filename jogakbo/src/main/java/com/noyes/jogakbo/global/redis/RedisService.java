@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.noyes.jogakbo.album.AlbumImagesInfo;
 
 import lombok.RequiredArgsConstructor;
 
