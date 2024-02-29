@@ -60,8 +60,6 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
       jwtService.extractAccessToken(request)
           .filter(jwtService::isTokenValid)
           .ifPresent(accessToken -> userService.checkUser(response, accessToken)
-              // .ifPresent(accessToken -> jwtService.extractSocialId(accessToken)
-              // .ifPresent(socialID -> userService.checkUser(response, socialID)
               .ifPresent(this::saveAuthentication));
 
       // filterChain.doFilter(request, response); // "/login" 요청이 들어오면, 다음 필터 호출
