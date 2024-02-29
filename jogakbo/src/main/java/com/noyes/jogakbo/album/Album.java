@@ -21,7 +21,7 @@ public class Album {
 
   // field with randomUUID for unique key
   @Id
-  private String albumID;
+  private String albumUUID;
   private String albumName;
   // field presents image path in AWS S3
   private String thumbnailImage;

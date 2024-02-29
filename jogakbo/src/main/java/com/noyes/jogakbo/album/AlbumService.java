@@ -88,7 +88,7 @@ public class AlbumService {
     blankImagesProp.add(new ArrayList<>());
 
     Album newAlbum = Album.builder()
-        .albumID(albumID)
+        .albumUUID(albumID)
         .albumName(albumName)
         .albumImages(blankImagesProp)
         .albumOwner(socialID)
@@ -387,7 +387,7 @@ public class AlbumService {
 
     // 서로의 요청, 승인 대기열에서 삭제
     sentAlbumInvitations.remove(targetUser);
-    userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumID());
+    userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumUUID());
 
     albumRepository.save(requestAlbum);
 
@@ -431,7 +431,7 @@ public class AlbumService {
 
     for (Album albumPiece : albumList) {
 
-      if (albumPiece.getAlbumID().equals(albumID))
+      if (albumPiece.getAlbumUUID().equals(albumID))
         return albumPiece;
     }
     return null;

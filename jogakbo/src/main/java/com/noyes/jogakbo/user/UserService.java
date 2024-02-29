@@ -168,7 +168,7 @@ public class UserService {
     List<Album> albums = userRepository.findById(socialID).get().getAlbums();
     for (Album album : albums) {
 
-      if (album.getAlbumID().equals(albumID))
+      if (album.getAlbumUUID().equals(albumID))
         return album;
     }
 
@@ -578,7 +578,7 @@ public class UserService {
     User user = userRepository.findById(resUserID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
 
-    user.getReceivedAlbumInvitations().removeIf(album -> album.getAlbumID().equals(albumID));
+    user.getReceivedAlbumInvitations().removeIf(album -> album.getAlbumUUID().equals(albumID));
 
     userRepository.save(user);
   }
