@@ -154,19 +154,20 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<AlbumImageInfo>> unloadImage(String albumID, int pageNum, String imageUUID)
+  public List<List<AlbumImageInfo>> unloadImage(String albumID, String imageUUID)
       throws JsonProcessingException {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
-    List<AlbumImageInfo> targetList = imagesInfo.get(pageNum);
 
-    for (AlbumImageInfo tmp : targetList) {
+    for (List<AlbumImageInfo> imagesInfoByPage : imagesInfo) {
+      for (AlbumImageInfo imageInfo : imagesInfoByPage) {
 
-      if (tmp.getAlbumImageUUID().equals(imageUUID)) {
+        if (imageInfo.getAlbumImageUUID().equals(imageUUID)) {
 
-        targetList.remove(tmp);
-        break;
+          imagesInfoByPage.remove(imageInfo);
+          break;
+        }
       }
     }
     redisService.setAlbumRedisValue(albumID, targetInfo);

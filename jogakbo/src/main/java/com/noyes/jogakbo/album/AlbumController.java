@@ -36,14 +36,14 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/album")
-@Tag(name = "앨범", description = "앨범 작업 관련 API 입니다.")
+@Tag(name = "앨범", description = "앨범 작업 API 모음")
 public class AlbumController {
 
   private final AlbumService albumService;
   private final SimpMessagingTemplate simpMessageTemplate;
   private final SseEmitters sseEmitters;
 
-  @Operation(description = "앨범 등록 메서드입니다.")
+  @Operation(description = "앨범 생성 API입니다.")
   @PostMapping()
   public ResponseEntity<String> createAlbum(@RequestParam String albumName, Principal principal)
       throws JsonProcessingException {
@@ -54,95 +54,83 @@ public class AlbumController {
     return ResponseEntity.ok(newAlbumID);
   }
 
-  @Operation(description = "앨범 프로필 정보 조회 메서드입니다.")
-  @GetMapping()
-  public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@RequestParam String albumID, Principal principal)
+  @Operation(description = "앨범 정보 조회 API입니다.")
+  @GetMapping("/{albumUUID}")
+  public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
       throws JsonProcessingException {
 
-    return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumID));
+    return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumUUID));
   }
 
-  @Operation(description = "앨범 페이지 추가 메서드입니다.")
-  @PostMapping("/newPage/{albumID}")
-  public ResponseEntity<String> createPage(@PathVariable String albumID, Principal principal)
+  @Operation(description = "앨범 페이지 추가 API입니다.")
+  @PostMapping("{albumUUID}/page")
+  public ResponseEntity<String> createPage(@PathVariable String albumUUID, Principal principal)
       throws JsonMappingException, JsonProcessingException {
 
-    List<List<AlbumImageInfo>> imagesInfo = albumService.addNewPage(albumID);
-    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
+    List<List<AlbumImageInfo>> imagesInfo = albumService.addNewPage(albumUUID);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumUUID, imagesInfo);
     return ResponseEntity.ok("페이지를 성공적으로 추가했습니다.");
   }
 
-  @Operation(description = "앨범 내부 사진 등록 메서드입니다.")
-  @PostMapping("/img/{albumID}")
-  public ResponseEntity<String> uploadImages(@PathVariable String albumID,
+  @Operation(description = "앨범 내부 사진 등록 API입니다.")
+  @PostMapping("/{albumUUID}/image")
+  public ResponseEntity<String> uploadImages(@PathVariable String albumUUID,
       @RequestPart List<MultipartFile> multipartFiles,
       @RequestParam String fileInfos) throws JsonProcessingException {
 
-    List<List<AlbumImageInfo>> imagesInfo = albumService.uploadImages(albumID, multipartFiles, fileInfos);
-    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
+    List<List<AlbumImageInfo>> imagesInfo = albumService.uploadImages(albumUUID, multipartFiles, fileInfos);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumUUID, imagesInfo);
 
     return ResponseEntity.ok("사진을 성공적으로 등록했습니다.");
   }
 
-  @Operation(description = "앨범 내부 사진 삭제 메서드입니다.")
-  @DeleteMapping("/img/{albumID}/{pageNum}")
-  public ResponseEntity<String> unloadImage(@PathVariable String albumID, @PathVariable int pageNum,
-      @RequestParam String imageUUID) throws JsonProcessingException {
+  @Operation(description = "앨범 내부 사진 삭제 API입니다.")
+  @DeleteMapping("/{albumUUID}/image/{albumImageUUID}")
+  public ResponseEntity<String> unloadImage(@PathVariable String albumUUID,
+      @PathVariable String albumImageUUID) throws JsonProcessingException {
 
-    List<List<AlbumImageInfo>> imagesInfo = albumService.unloadImage(albumID, pageNum, imageUUID);
-    simpMessageTemplate.convertAndSend("/sub/edit/" + albumID, imagesInfo);
+    List<List<AlbumImageInfo>> imagesInfo = albumService.unloadImage(albumUUID, albumImageUUID);
+    simpMessageTemplate.convertAndSend("/sub/edit/" + albumUUID, imagesInfo);
 
     return ResponseEntity.ok("이미지를 성공적으로 제외했습니다.");
   }
 
-  @Operation(description = "공동 작업을 위한 웹소켓 메소드 입니다.")
-  @MessageMapping("/edit/{albumID}")
-  @SendTo("/sub/edit/{albumID}")
-  public List<List<AlbumImageInfo>> editImage(@DestinationVariable String albumID, List<AlbumImageEditMessage> payload)
+  @Operation(description = "공동 작업을 위한 웹소켓 API 입니다.")
+  @MessageMapping("/edit/{albumUUID}")
+  @SendTo("/sub/edit/{albumUUID}")
+  public List<List<AlbumImageInfo>> editImage(@DestinationVariable String albumUUID,
+      List<AlbumImageEditMessage> payload)
       throws Exception {
 
-    log.info("albumID : " + albumID);
-
-    return albumService.editImage(albumID, payload);
+    return albumService.editImage(albumUUID, payload);
   }
 
-  @Operation(description = "앨범의 프로필 변경 API 입니다.")
-  @PutMapping("profile/{albumID}")
-  public ResponseEntity<String> updateProfile(@PathVariable String albumID, @RequestParam String newAlbumName,
+  @Operation(description = "앨범 정보 변경 API 입니다.")
+  @PutMapping("/{albumUUID}")
+  public ResponseEntity<String> updateProfile(@PathVariable String albumUUID, @RequestParam String newAlbumName,
       @RequestPart(required = false) MultipartFile thumbnailImage,
       Principal principal) {
 
-    String result = albumService.updateProfile(albumID, newAlbumName, thumbnailImage, principal.getName());
+    String result = albumService.updateProfile(albumUUID, newAlbumName, thumbnailImage, principal.getName());
 
     return ResponseEntity.ok(result);
   }
 
-  @Operation(description = "앨범 삭제 메서드입니다.")
-  @DeleteMapping("/{albumID}")
-  public ResponseEntity<String> removeAlbum(@PathVariable String albumID, Principal principal) throws IOException {
+  @Operation(description = "앨범 삭제 API입니다.")
+  @DeleteMapping("/{albumUUID}")
+  public ResponseEntity<String> removeAlbum(@PathVariable String albumUUID, Principal principal) throws IOException {
 
-    String result = albumService.removeAlbum(albumID, principal.getName());
+    String result = albumService.removeAlbum(albumUUID, principal.getName());
 
     return ResponseEntity.ok(result);
   }
 
-  @Operation(description = "웹소켓 테스트 메소드 입니다.")
-  @MessageMapping("/test/{albumID}")
-  @SendTo("/sub/test/{albumID}")
-  public String testWebSocket(@DestinationVariable String albumID, String payload)
-      throws Exception {
-
-    log.info("albumID : " + albumID);
-
-    return payload;
-  }
-
-  @Operation(description = "앨범 초대 메서드입니다.")
-  @PostMapping("/invitation/{albumID}/{collaboUserID}")
-  public ResponseEntity<String> sendAlbumInvitation(@PathVariable String albumID, @PathVariable String collaboUserID,
+  @Operation(description = "앨범 초대 API입니다.")
+  @PostMapping("/{albumUUID}/invitation/{collaboUserUUID}")
+  public ResponseEntity<String> sendAlbumInvitation(@PathVariable String albumUUID, @PathVariable String collaboUserID,
       Principal principal) {
 
-    Album album = albumService.sendAlbumInvitation(albumID, collaboUserID, principal.getName());
+    Album album = albumService.sendAlbumInvitation(albumUUID, collaboUserID, principal.getName());
 
     if (album == null)
       return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
@@ -152,12 +140,12 @@ public class AlbumController {
     return ResponseEntity.ok(result);
   }
 
-  @Operation(description = "앨범 초대 응답 엔드포인트입니다. reply 파라미터의 값이 accept 면 앨범에 참여하게 됩니다.")
-  @PostMapping("/invitation-reply/{albumID}")
-  public ResponseEntity<String> replyAlbumInvitation(@PathVariable String albumID, @RequestParam String reply,
+  @Operation(description = "앨범 초대 응답 API입니다. reply 파라미터의 값이 accept 면 앨범에 참여하게 됩니다.")
+  @PostMapping("/{albumUUID}/invitation-reply")
+  public ResponseEntity<String> replyAlbumInvitation(@PathVariable String albumUUID, @RequestParam String reply,
       Principal principal) {
 
-    String res = albumService.replyAlbumInvitation(albumID, principal.getName(), reply);
+    String res = albumService.replyAlbumInvitation(albumUUID, principal.getName(), reply);
 
     return ResponseEntity.ok(res);
   }
