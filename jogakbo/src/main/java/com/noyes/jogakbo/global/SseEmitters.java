@@ -19,9 +19,9 @@ public class SseEmitters {
   // onCompletion가 다른 쓰레드에서 실행되기에 thread-safe한 ConcurrentHashMap 활용
   private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-  public SseEmitter add(String socialID, SseEmitter emitter) {
+  public SseEmitter add(String userUUID, SseEmitter emitter) {
 
-    this.emitters.put(socialID, emitter);
+    this.emitters.put(userUUID, emitter);
 
     emitter.onCompletion(() -> this.emitters.values().remove(emitter));
 
@@ -30,11 +30,11 @@ public class SseEmitters {
     return emitter;
   }
 
-  public String sendFriendRequestAlarm(String socialID, Friend requestUser) {
+  public String sendFriendRequestAlarm(String userUUID, Friend requestUser) {
 
     try {
 
-      this.emitters.get(socialID).send(SseEmitter.event()
+      this.emitters.get(userUUID).send(SseEmitter.event()
           .name("friendRequest")
           .data(requestUser));
 
@@ -53,7 +53,7 @@ public class SseEmitters {
   /**
    * send SSE alarm to user corresponding `collaboUserID` with `requestAlbum` info
    * 
-   * @param socialID
+   * @param userUUID
    * @param requestAlbum
    * @return Result info in String
    */

@@ -8,6 +8,6 @@ import lombok.Data;
 public class Friend {
 
   private String nickname;
-  private String socialID;
+  private String userUUID;
   private String profileImageURL;
 }

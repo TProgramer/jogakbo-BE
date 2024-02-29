@@ -22,7 +22,7 @@ import lombok.Data;
 public class User {
 
   @Id
-  private String socialID;
+  private String userUUID;
   private Role role;
   private String nickname;
   private String provider;
@@ -40,6 +40,7 @@ public class User {
   @DocumentReference(lazy = true)
   private List<Album> albums;
 
+  // check flag to use @CreatedDate, @LastModified annotation with custom PK
   @Version
   private int version;
 

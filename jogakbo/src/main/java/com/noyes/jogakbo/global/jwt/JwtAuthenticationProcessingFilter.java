@@ -124,7 +124,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
     jwtService.extractAccessToken(request)
         .filter(jwtService::isTokenValid)
-        .ifPresent(accessToken -> jwtService.extractSocialId(accessToken)
+        .ifPresent(accessToken -> jwtService.extractUserUUID(accessToken)
             .ifPresent(socialID -> userService.getUser(socialID)
                 .ifPresent(this::saveAuthentication)));
 
@@ -154,7 +154,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     String password = PasswordUtil.generateRandomPassword();
 
     UserDetails userDetailsUser = org.springframework.security.core.userdetails.User.builder()
-        .username(user.getSocialID())
+        .username(user.getUserUUID())
         .password(password)
         .roles(user.getRole().name())
         .build();

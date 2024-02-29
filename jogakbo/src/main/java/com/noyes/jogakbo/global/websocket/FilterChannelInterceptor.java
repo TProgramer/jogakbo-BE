@@ -42,16 +42,16 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
     assert headerAccessor != null;
     if (headerAccessor.getCommand() == StompCommand.CONNECT) {
 
-      // 담겨있는 유저 socialID가 유효한 지 검증 후 추출
+      // 담겨있는 유저 userUUID가 유효한 지 검증 후 추출
       String token = String.valueOf(headerAccessor.getNativeHeader("Authorization").get(0));
-      String socialID = jwtService.extractSocialId(token.replace("Bearer ", ""))
+      String userUUID = jwtService.extractUserUUID(token.replace("Bearer ", ""))
           .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유저 인증에 실패하였습니다."));
 
-      // 확인된 socialID 를 기반으로 세션 유저 설정
+      // 확인된 userUUID 를 기반으로 세션 유저 설정
       String password = PasswordUtil.generateRandomPassword();
 
       UserDetails userDetailsUser = User.builder()
-          .username(socialID)
+          .username(userUUID)
           .password(password)
           .roles("USER")
           .build();
@@ -64,13 +64,13 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
 
     } else if (headerAccessor.getCommand() == StompCommand.SUBSCRIBE) {
 
-      // headerAccessor 에서 sessionID와 albumID, 유저 socialID 추출
+      // headerAccessor 에서 sessionID와 albumID, 유저 userUUID 추출
       String sessionID = headerAccessor.getSessionId();
       String albumID = headerAccessor.getDestination().split("/")[3];
-      String socialID = headerAccessor.getUser().getName();
+      String userUUID = headerAccessor.getUser().getName();
 
       // 유저가 albumEditors 에 포함되어 있는지 검증
-      if (!albumService.validAlbumEditor(albumID, socialID))
+      if (!albumService.validAlbumEditor(albumID, userUUID))
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 존재하지 않습니다.");
 
       // sessionID에 구독 albumID를 경로를 업데이트

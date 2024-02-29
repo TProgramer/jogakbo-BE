@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class UserInfo {
 
-  private String socialID;
+  private String userUUID;
   private String nickname;
   private String profileImageURL;
 }

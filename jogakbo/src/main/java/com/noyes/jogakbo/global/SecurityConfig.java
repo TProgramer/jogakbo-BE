@@ -51,8 +51,8 @@ public class SecurityConfig {
           // TODO - 로그아웃 당시에 토큰이 만료됐을 경우를 추가 고려
           jwtService.extractAccessToken(request)
               .filter(jwtService::isTokenValid)
-              .ifPresentOrElse(accessToken -> jwtService.extractSocialId(accessToken)
-                  .ifPresent(socialID -> userService.deleteRefreshToken(response, socialID)),
+              .ifPresentOrElse(accessToken -> jwtService.extractUserUUID(accessToken)
+                  .ifPresent(userUUID -> userService.deleteRefreshToken(response, userUUID)),
                   () -> {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                   });

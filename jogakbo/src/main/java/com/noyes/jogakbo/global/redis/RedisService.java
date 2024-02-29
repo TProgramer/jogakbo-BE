@@ -16,25 +16,27 @@ public class RedisService {
   private final ObjectMapper objectMapper;
 
   // 직접 만든 redisTemplate 사용
-  public void setAlbumRedisValue(String albumID, AlbumImagesInfo albumImagesInfo) throws JsonProcessingException {
+  public void setAlbumRedisValue(String albumUUID, AlbumImagesInfo albumImagesInfo)
+      throws JsonProcessingException {
 
-    redisTemplate.opsForValue().set(albumID, objectMapper.writeValueAsString(albumImagesInfo));
+    redisTemplate.opsForValue().set(albumUUID, objectMapper.writeValueAsString(albumImagesInfo));
   }
 
-  public <T> T getAlbumRedisValue(String albumID, Class<T> classType) throws JsonProcessingException {
+  public <T> T getAlbumRedisValue(String albumUUID, Class<T> classType)
+      throws JsonProcessingException {
 
-    String redisValue = (String) redisTemplate.opsForValue().get(albumID);
+    String redisValue = (String) redisTemplate.opsForValue().get(albumUUID);
 
     return objectMapper.readValue(redisValue, classType);
   }
 
   /**
-   * Album data of albumID will be removed in redis.
+   * Album data of albumUUID will be removed in redis.
    * 
    * @param
    */
-  public void removeAlbumRedisValue(String albumID) {
+  public void removeAlbumRedisValue(String albumUUID) {
 
-    redisTemplate.delete(albumID);
+    redisTemplate.delete(albumUUID);
   }
 }
