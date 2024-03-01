@@ -19,6 +19,5 @@ public class AlbumImagesInfo {
 
   @Id
   private String id;
-
   private List<List<AlbumImageInfo>> imagesInfo;
 }

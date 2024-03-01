@@ -5,12 +5,8 @@ import java.security.Principal;
 import java.text.ParseException;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -186,35 +182,5 @@ public class UserController {
     String result = userService.updateProfile(newNickname, profileImage, principal.getName());
 
     return ResponseEntity.ok(result);
-  }
-
-  /**
-   * Id에 해당하는 Member 조회
-   *
-   * @param id
-   * @return
-   */
-  @Operation(description = "특정 유저 조회 메서드입니다.")
-  @GetMapping("{socialID}")
-  public ResponseEntity<User> getUser(@PathVariable String socialID) {
-
-    User user = userService.getUser(socialID).get();
-
-    return new ResponseEntity<>(user, HttpStatus.OK);
-  }
-
-  /**
-   * Id에 해당하는 Member 삭제
-   *
-   * @param id
-   * @return
-   */
-  @Operation(description = "특정 유저 제거 메서드입니다.")
-  @DeleteMapping("{socialID}")
-  public ResponseEntity<String> deleteUser(@PathVariable String socialID) {
-
-    userService.deleteUser(socialID);
-
-    return new ResponseEntity<>(socialID, HttpStatus.OK);
   }
 }

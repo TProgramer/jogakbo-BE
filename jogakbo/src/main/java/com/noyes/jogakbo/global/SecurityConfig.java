@@ -14,11 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
@@ -44,8 +41,6 @@ public class SecurityConfig {
 
     http.logout()
         .logoutUrl("/logout") // 로그아웃 처리 URL (= form action url)
-        // .logoutSuccessUrl("/login") // 로그아웃 성공 후 targetUrl,
-        // logoutSuccessHandler 가 있다면 효과 없으므로 주석처리.
         .addLogoutHandler((request, response, authentication) -> {
           log.info("로그아웃 호출");
           // TODO - 로그아웃 당시에 토큰이 만료됐을 경우를 추가 고려
@@ -56,24 +51,17 @@ public class SecurityConfig {
                   () -> {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                   });
-        })
-        // 로그아웃 성공 핸들러
-        .logoutSuccessHandler((request, response, authentication) -> {
-          // response.sendRedirect("/login");
         });
+
     http
         .formLogin().disable() // FormLogin 사용 안함
         .httpBasic().disable() // httpBasic 사용 안함
         .csrf().disable() // Token 기반 인증 방식이기에 csrf 보안 사용 안함
         .headers().frameOptions().disable() // Graphiql 접근을 위해 Click Jacking 공격을 막는 X-Frame-Options 비활성화
         .and()
-
-        // .cors().disable()
-
         // 세션을 사용하지 않으므로 STATELESS로 설정
         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
-
         // URL별 권한 관리 옵션
         .authorizeRequests()
         // 아이콘, css, js 관련
@@ -92,30 +80,6 @@ public class SecurityConfig {
     http.addFilterAfter(jwtAuthenticationProcessingFilter(), LogoutFilter.class);
 
     return http.build();
-  }
-
-  @Bean
-  public InMemoryUserDetailsManager userDetailsManager() {
-
-    UserDetails user = User.withDefaultPasswordEncoder() // (1)
-        .username("user")
-        .password("password")
-        .roles("USER")
-        .build();
-
-    UserDetails admin = User.withDefaultPasswordEncoder() // (2)
-        .username("admin")
-        .password("password")
-        .roles("USER", "ADMIN")
-        .build();
-
-    return new InMemoryUserDetailsManager(user, admin); // (3)
-  }
-
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-
-    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
   }
 
   @Bean

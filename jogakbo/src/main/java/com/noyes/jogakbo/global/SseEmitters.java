@@ -10,9 +10,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.user.DTO.Friend;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Component
 public class SseEmitters {
 

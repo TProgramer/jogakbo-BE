@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -181,40 +180,6 @@ public class UserService {
     List<Album> albums = targetUser.getAlbums();
     albums.add(newAlbum);
     userRepository.save(targetUser);
-  }
-
-  /**
-   * User 수정
-   * JPA Repository의 save Method를 사용하여 객체를 갱신
-   * Entity인 Model 객체에 @Id로 설정한 키 값이 존재할 경우 해당하는 데이터를 갱신
-   * 만약 수정하려는 Entity인 Model 객체에 @Id 값이 존재하지 않으면 데이터가 추가되기 때문에
-   * 아래와 같이 갱신하고자 하는 User가 존재하는지 체크하는 로직을 추가
-   *
-   * @param model
-   * @return
-   */
-  public User updateUserInfo(UserDetails token, UserUpdateDTO updateData) {
-
-    User updatedUser = null;
-
-    try {
-
-      if (updateData.isUserUpdateEmpty())
-        throw new Exception("Required info is not qualified");
-
-      User existUser = getUser(token.getUsername()).get();
-
-      existUser.setNickname(updateData.getNickname());
-
-      // if (!ObjectUtils.isEmpty(existUser))
-      // updatedUser = userRepository.save(model);
-
-    } catch (Exception e) {
-
-      log.info("[Fail] e: " + e.toString());
-    }
-
-    return updatedUser;
   }
 
   /**
