@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/user")
 @RestController
-@Tag(name = "유저", description = "유저 관련 API 입니다.")
+@Tag(name = "유저", description = "유저 API 모음집")
 public class UserController {
 
   private final UserService userService;
@@ -46,8 +46,8 @@ public class UserController {
    * @return
    * @throws ParseException
    */
-  @Operation(description = "유저 등록 메서드입니다.")
-  @PostMapping("/sign-up")
+  @Operation(description = "유저 등록 API입니다.")
+  @PostMapping()
   public ResponseEntity<String> createUser(@RequestBody UserSignUpDTO userSignUpDto) throws Exception {
 
     userService.signUp(userSignUpDto);
@@ -55,56 +55,17 @@ public class UserController {
     return ResponseEntity.ok("회원가입 성공!");
   }
 
-  /**
-   * User 정보 수정
-   * 
-   * @AuthenticationPrincipal 를 통해 인증정보를 반아오기
-   *
-   * @return
-   * @throws ParseException
-   */
-  @Operation(description = "유저 정보 수정 메서드입니다.")
-  @PutMapping()
-  public ResponseEntity<User> updateUser(@AuthenticationPrincipal UserDetails token,
-      @RequestBody UserUpdateDTO updateData) throws ParseException {
-
-    User updatedUser = userService.updateUserInfo(token, updateData);
-
-    if (!ObjectUtils.isEmpty(updatedUser)) {
-
-      return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-
-    } else {
-
-      return new ResponseEntity<>(updatedUser, HttpStatus.NOT_FOUND);
-    }
-  }
-
-  /**
-   * Member List 조회
-   *
-   * @return
-   */
-  @Operation(description = "유저 전체 조회 메서드입니다.")
-  @GetMapping("/list")
-  public ResponseEntity<List<User>> getUsers() {
-
-    List<User> users = userService.getUsers();
-
-    return new ResponseEntity<>(users, HttpStatus.OK);
-  }
-
-  @Operation(description = "본인 프로필 조회 메서드입니다.")
-  @GetMapping("/profile")
+  @Operation(description = "본인 프로필 조회 API입니다.")
+  @GetMapping()
   public ResponseEntity<UserProfile> getProfile(Principal principal) {
 
-    String socialID = principal.getName();
-    UserProfile userProfile = userService.getUserProfile(socialID);
+    String userUUID = principal.getName();
+    UserProfile userProfile = userService.getUserProfile(userUUID);
 
     return ResponseEntity.ok(userProfile);
   }
 
-  @Operation(description = "닉네임으로 친구 찾기 메서드입니다.")
+  @Operation(description = "닉네임으로 친구 찾기 API입니다.")
   @GetMapping("/search")
   public ResponseEntity<List<FriendSearchResult>> searchFriend(@RequestParam String nickname, Principal principal) {
 
@@ -116,16 +77,16 @@ public class UserController {
     return ResponseEntity.ok(searchResult);
   }
 
-  @Operation(description = "친구 추가 요청 메서드입니다.")
-  @PostMapping("/friend")
-  public ResponseEntity<String> sendFriendRequest(@RequestParam String socialID, Principal principal) {
+  @Operation(description = "친구 추가 요청 API입니다.")
+  @PostMapping("/friend-request/{userUUID}")
+  public ResponseEntity<String> sendFriendRequest(@PathVariable String userUUID, Principal principal) {
 
-    Friend requestUser = userService.sendFriendRequest(principal.getName(), socialID);
+    Friend requestUser = userService.sendFriendRequest(principal.getName(), userUUID);
 
     if (requestUser == null)
       return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
 
-    String result = sseEmitters.sendFriendRequestAlarm(socialID, requestUser);
+    String result = sseEmitters.sendFriendRequestAlarm(userUUID, requestUser);
 
     return ResponseEntity.ok(result);
   }
@@ -152,29 +113,29 @@ public class UserController {
     return ResponseEntity.ok(emitter);
   }
 
-  @Operation(description = "친구 요청 응답 엔드포인트입니다. reply 파라미터의 값이 accept 면 친구가 됩니다. ")
-  @PostMapping("/friend-reply")
-  public ResponseEntity<String> replyFriendRequest(@RequestParam String socialID, @RequestParam String reply,
+  @Operation(description = "친구 요청 응답 API입니다. reply 파라미터의 값이 accept 면 친구가 됩니다. ")
+  @PostMapping("/friend-reply/{userUUID}")
+  public ResponseEntity<String> replyFriendRequest(@PathVariable String userUUID, @RequestParam String reply,
       Principal principal) {
 
-    String res = userService.replyFriendRequest(socialID, principal.getName(), reply);
+    String res = userService.replyFriendRequest(userUUID, principal.getName(), reply);
 
     return ResponseEntity.ok(res);
   }
 
   @Operation(description = "친구 삭제 엔드포인트입니다.")
-  @DeleteMapping("/friend")
-  public ResponseEntity<String> removeFriend(@RequestParam String socialID,
+  @DeleteMapping("/friend/{userUUID}")
+  public ResponseEntity<String> removeFriend(@PathVariable String userUUID,
       Principal principal) {
 
-    String res = userService.removeFriend(socialID, principal.getName());
+    String res = userService.removeFriend(userUUID, principal.getName());
     log.debug(res);
 
     return ResponseEntity.ok(res);
   }
 
-  @Operation(description = "유저의 프로필 변경 API 입니다.")
-  @PutMapping("profile")
+  @Operation(description = "본인 프로필 수정 API 입니다.")
+  @PutMapping()
   public ResponseEntity<String> updateProfile(@RequestParam String newNickname,
       @RequestPart(required = false) MultipartFile profileImage,
       Principal principal) {
