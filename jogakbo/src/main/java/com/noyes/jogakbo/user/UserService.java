@@ -114,6 +114,8 @@ public class UserService {
         .sentFriendRequests(new ArrayList<>())
         .receivedFriendRequests(new ArrayList<>())
         .role(Role.USER)
+        .collaboAlbums(new ArrayList<>())
+        .receivedAlbumInvitations(new ArrayList<>())
         .build();
 
     user.updateRefreshToken(newRefreshToken);
