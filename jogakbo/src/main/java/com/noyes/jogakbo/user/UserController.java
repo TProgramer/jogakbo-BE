@@ -40,21 +40,6 @@ public class UserController {
   private final UserService userService;
   private final SseEmitters sseEmitters;
 
-  /**
-   * Member 생성
-   *
-   * @return
-   * @throws ParseException
-   */
-  @Operation(description = "유저 등록 API입니다.")
-  @PostMapping()
-  public ResponseEntity<String> createUser(@RequestBody UserSignUpDTO userSignUpDto) throws Exception {
-
-    userService.signUp(userSignUpDto);
-
-    return ResponseEntity.ok("회원가입 성공!");
-  }
-
   @Operation(description = "본인 프로필 조회 API입니다.")
   @GetMapping()
   public ResponseEntity<UserProfile> getProfile(Principal principal) {

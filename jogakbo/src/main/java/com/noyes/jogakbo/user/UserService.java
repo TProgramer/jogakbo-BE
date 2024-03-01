@@ -36,30 +36,6 @@ public class UserService {
   private final JwtService jwtService;
   private final AwsS3Service awsS3Service;
 
-  /**
-   * User 생성
-   * JPA Repository의 save Method를 사용하여 객체를 생성
-   * Entity인 Model 객체에 @Id로 설정한 키 값이 없을 경우 해당하는 데이터를 추가
-   * 만약 추가하려는 Entity인 Model 객체에 @Id 값이 이미 존재하면 갱신되기 때문에
-   * 아래와 같이 추가하고자 하는 User가 존재하는지 체크하는 로직을 추가
-   * 
-   * @param model
-   * @return
-   */
-  public void signUp(UserSignUpDTO userSignUpDto) throws Exception {
-
-    if (userRepository.findById(userSignUpDto.getUserUUID()).isPresent())
-      throw new Exception("이미 존재하는 이메일입니다.");
-
-    User user = User.builder()
-        .userUUID(userSignUpDto.getUserUUID())
-        .nickname(userSignUpDto.getNickname())
-        .role(Role.USER)
-        .build();
-
-    userRepository.save(user);
-  }
-
   public Optional<User> checkUser(HttpServletResponse response, String accessToken) {
 
     String userUUID = jwtService.extractUserUUID(accessToken).get();
