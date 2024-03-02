@@ -48,17 +48,18 @@ public class SseEmitters {
   }
 
   /**
-   * send SSE alarm to user corresponding `collaboUserID` with `requestAlbum` info
+   * send SSE alarm to user corresponding `collaboUserUUID` with `requestAlbum`
+   * info
    * 
    * @param userUUID
    * @param requestAlbum
    * @return Result info in String
    */
-  public String sendAlbumInvitation(String collaboUserID, Album requestAlbum) {
+  public String sendAlbumInvitation(String collaboUserUUID, Album requestAlbum) {
 
     try {
 
-      this.emitters.get(collaboUserID).send(SseEmitter.event()
+      this.emitters.get(collaboUserUUID).send(SseEmitter.event()
           .name("albumInvitation")
           .data(requestAlbum));
 

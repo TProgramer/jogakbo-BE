@@ -494,14 +494,14 @@ public class UserService {
   }
 
   /**
-   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * collaboUserUUID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
    * 
-   * @param collaboUserID
+   * @param collaboUserUUID
    * @param album
    */
-  public void addReceivedAlbumInvitations(@NonNull String collaboUserID, Album album) {
+  public void addReceivedAlbumInvitations(@NonNull String collaboUserUUID, Album album) {
 
-    User user = userRepository.findById(collaboUserID)
+    User user = userRepository.findById(collaboUserUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
 
     user.getReceivedAlbumInvitations().add(album);
@@ -513,7 +513,7 @@ public class UserService {
    * resUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에서 albumID에 해당하는 album
    * 제거
    * 
-   * @param collaboUserID
+   * @param collaboUserUUID
    * @param album
    */
   public void removeAlbumInvitation(@NonNull String resUserID, String albumID) {
@@ -527,14 +527,14 @@ public class UserService {
   }
 
   /**
-   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * collaboUserUUID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
    * 
-   * @param collaboUserID
+   * @param collaboUserUUID
    * @param album
    */
-  public void addCollaboAlbum(@NonNull String collaboUserID, Album album) {
+  public void addCollaboAlbum(@NonNull String collaboUserUUID, Album album) {
 
-    User user = userRepository.findById(collaboUserID)
+    User user = userRepository.findById(collaboUserUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
 
     user.getCollaboAlbums().add(album);

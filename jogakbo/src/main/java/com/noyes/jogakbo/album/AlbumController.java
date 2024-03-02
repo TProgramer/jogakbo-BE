@@ -127,15 +127,16 @@ public class AlbumController {
 
   @Operation(description = "앨범 초대 API입니다.")
   @PostMapping("/{albumUUID}/invitation/{collaboUserUUID}")
-  public ResponseEntity<String> sendAlbumInvitation(@PathVariable String albumUUID, @PathVariable String collaboUserID,
+  public ResponseEntity<String> sendAlbumInvitation(@PathVariable String albumUUID,
+      @PathVariable String collaboUserUUID,
       Principal principal) {
 
-    Album album = albumService.sendAlbumInvitation(albumUUID, collaboUserID, principal.getName());
+    Album album = albumService.sendAlbumInvitation(albumUUID, collaboUserUUID, principal.getName());
 
     if (album == null)
       return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
 
-    String result = sseEmitters.sendAlbumInvitation(collaboUserID, album);
+    String result = sseEmitters.sendAlbumInvitation(collaboUserUUID, album);
 
     return ResponseEntity.ok(result);
   }
