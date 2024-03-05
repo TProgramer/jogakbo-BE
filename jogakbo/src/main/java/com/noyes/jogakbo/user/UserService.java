@@ -140,34 +140,12 @@ public class UserService {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  public Album getAlbumByUser(@NonNull String userUUID, String albumID) {
-
-    List<Album> albums = userRepository.findById(userUUID).get().getAlbums();
-    for (Album album : albums) {
-
-      if (album.getAlbumUUID().equals(albumID))
-        return album;
-    }
-
-    return null;
-  }
-
   public void addAlbum(Album newAlbum, @NonNull String userUUID) {
 
     User targetUser = userRepository.findById(userUUID).get();
     List<Album> albums = targetUser.getAlbums();
     albums.add(newAlbum);
     userRepository.save(targetUser);
-  }
-
-  /**
-   * User List 조회
-   * JPA Repository의 findAll Method를 사용하여 전체 User를 조회
-   * 
-   * @return
-   */
-  public List<User> getUsers() {
-    return userRepository.findAll();
   }
 
   /**
