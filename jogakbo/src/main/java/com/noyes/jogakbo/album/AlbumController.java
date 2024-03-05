@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
+import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
@@ -158,6 +159,16 @@ public class AlbumController {
       Principal principal) {
 
     AlbumMemberInfo albumMemberInfo = albumService.getAlbumMemberInfo(albumUUID, principal.getName());
+
+    return ResponseEntity.ok(albumMemberInfo);
+  }
+
+  @Operation(description = "앨범 상세 정보 조회 API입니다.")
+  @GetMapping("/{albumUUID}/album-detail-info")
+  public ResponseEntity<AlbumDetailInfo> getAlbumDetailInfo(@PathVariable String albumUUID,
+      Principal principal) {
+
+    AlbumDetailInfo albumMemberInfo = albumService.getAlbumDetailInfo(albumUUID, principal.getName());
 
     return ResponseEntity.ok(albumMemberInfo);
   }

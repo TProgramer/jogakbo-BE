@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
+import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
@@ -479,6 +480,24 @@ public class AlbumService {
         .albumOwnerInfo(albumOwnerInfo)
         .albumEditorsInfos(albumEditorsInfos)
         .albumInviteesInfos(albumInviteesInfos)
+        .build();
+  }
+
+  public AlbumDetailInfo getAlbumDetailInfo(String albumUUID, String userUUID) {
+
+    // 유저가 album editor 인지 검증
+    if (!validAlbumEditor(albumUUID, userUUID))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
+
+    // 앨범 정보 추출
+    Album album = albumRepository.findById(albumUUID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+
+    return AlbumDetailInfo.builder()
+        .albumName(album.getAlbumName())
+        .thumbnailImage(album.getThumbnailImage())
+        .createdDate(album.getCreatedDate())
+        .isPublic(false)
         .build();
   }
 }
