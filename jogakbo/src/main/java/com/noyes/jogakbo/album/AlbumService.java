@@ -61,11 +61,11 @@ public class AlbumService {
     }
 
     // 앨범에 초대된 유저 정보 추출
-    List<String> sentAlbumInvitations = album.getSentAlbumInvitations();
-    List<UserInfo> sentAlbumInvitationsInfo = new ArrayList<>();
-    for (String sentAlbumInvitation : sentAlbumInvitations) {
+    List<String> albumInvitees = album.getAlbumInvitees();
+    List<UserInfo> albumInviteesInfo = new ArrayList<>();
+    for (String albumInvitee : albumInvitees) {
 
-      sentAlbumInvitationsInfo.add(userService.getUserInfo(sentAlbumInvitation));
+      albumInviteesInfo.add(userService.getUserInfo(albumInvitee));
     }
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
@@ -78,7 +78,7 @@ public class AlbumService {
         .createdDate(album.getCreatedDate())
         .albumOwnerInfo(albumOwnerInfo)
         .albumEditorsInfo(albumEditorsInfo)
-        .sentAlbumInvitationsInfo(sentAlbumInvitationsInfo)
+	 .albumInvitees(albumInvitees)
         .build();
   }
 
@@ -94,7 +94,7 @@ public class AlbumService {
         .albumImages(blankImagesProp)
         .albumOwner(userUUID)
         .albumEditors(new ArrayList<>())
-        .sentAlbumInvitations(new ArrayList<>())
+        .albumInvitees(new ArrayList<>())
         .build();
 
     albumRepository.save(newAlbum);
@@ -333,9 +333,9 @@ public class AlbumService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
 
     // 이미 요청을 보낸 대상일 경우 예외처리
-    List<String> sentAlbumInvitations = album.getSentAlbumInvitations();
+    List<String> albumInvitees = album.getAlbumInvitees();
 
-    if (isUserInList(sentAlbumInvitations, collaboUserUUID) != null)
+    if (isUserInList(albumInvitees, collaboUserUUID) != null)
       return null;
 
     // 이미 초대된 경우도 예외처리
@@ -344,7 +344,7 @@ public class AlbumService {
       return null;
 
     // 앨범 초대 리스트에 등록
-    sentAlbumInvitations.add(collaboUserUUID);
+    albumInvitees.add(collaboUserUUID);
     userService.addReceivedAlbumInvitations(collaboUserUUID, album);
 
     albumRepository.save(album);
@@ -369,9 +369,9 @@ public class AlbumService {
     Album requestAlbum = albumRepository.findById(albumUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
 
-    List<String> sentAlbumInvitations = requestAlbum.getSentAlbumInvitations();
+    List<String> albumInvitees = requestAlbum.getAlbumInvitees();
 
-    String targetUser = isUserInList(sentAlbumInvitations, resUserID);
+    String targetUser = isUserInList(albumInvitees, resUserID);
 
     if (targetUser == null)
       isValidRequest = false;
@@ -388,7 +388,7 @@ public class AlbumService {
       isValidRequest = false;
 
     // 서로의 요청, 승인 대기열에서 삭제
-    sentAlbumInvitations.remove(targetUser);
+    albumInvitees.remove(targetUser);
     userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumUUID());
 
     albumRepository.save(requestAlbum);

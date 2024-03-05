@@ -33,7 +33,7 @@ public class Album {
   // field for album co-workers list
   private List<String> albumEditors;
   // field for invited user list
-  private List<String> sentAlbumInvitations;
+  private List<String> albumInvitees;
 
   // check flag to use @CreatedDate, @LastModified annotation with custom PK
   @Version
