@@ -32,7 +32,7 @@ public class Album {
   @Builder.Default
   private String thumbnailOriginalName = "";
   @Builder.Default
-  private List<List<AlbumImageInfo>> albumImages = new ArrayList<>(List.of());
+  private List<List<AlbumImageInfo>> albumImages = List.of(new ArrayList<>());
   // field for album co-workers list
   @Builder.Default
   private List<String> albumEditors = new ArrayList<>();

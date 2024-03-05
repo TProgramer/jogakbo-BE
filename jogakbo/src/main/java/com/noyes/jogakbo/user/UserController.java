@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "유저", description = "유저 API 모음집")
 public class UserController {
 
+  private final MyPageService myPageService;
   private final UserService userService;
   private final SseEmitters sseEmitters;
 
@@ -45,7 +46,7 @@ public class UserController {
   public ResponseEntity<UserProfile> getProfile(Principal principal) {
 
     String userUUID = principal.getName();
-    UserProfile userProfile = userService.getUserProfile(userUUID);
+    UserProfile userProfile = myPageService.getUserProfile(userUUID);
 
     return ResponseEntity.ok(userProfile);
   }
