@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
+import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
 import com.noyes.jogakbo.global.SseEmitters;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -149,5 +150,15 @@ public class AlbumController {
     String res = albumService.replyAlbumInvitation(albumUUID, principal.getName(), reply);
 
     return ResponseEntity.ok(res);
+  }
+
+  @Operation(description = "앨범 구성원 조회 API입니다.")
+  @GetMapping("/{albumUUID}/album-member-info")
+  public ResponseEntity<AlbumMemberInfo> getAlbumMemberInfo(@PathVariable String albumUUID,
+      Principal principal) {
+
+    AlbumMemberInfo albumMemberInfo = albumService.getAlbumMemberInfo(albumUUID, principal.getName());
+
+    return ResponseEntity.ok(albumMemberInfo);
   }
 }

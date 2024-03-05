@@ -17,6 +17,7 @@ import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
+import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
 import com.noyes.jogakbo.global.redis.AlbumImagesInfo;
 import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
@@ -76,9 +77,6 @@ public class AlbumService {
         .imagesInfo(imagesInfo)
         .thumbnailImage(album.getThumbnailImage())
         .createdDate(album.getCreatedDate())
-        .albumOwnerInfo(albumOwnerInfo)
-        .albumEditorsInfo(albumEditorsInfo)
-	 .albumInvitees(albumInvitees)
         .build();
   }
 
@@ -437,5 +435,52 @@ public class AlbumService {
         return albumPiece;
     }
     return null;
+  }
+
+  /**
+   * 앨범에 참여 중인 앨범 주인, 공동 작업자, 초대 받은 유저들의 UserInfo를 모아 AlbumMemberInfo를 반환
+   * 
+   * @param albumUUID
+   * @param userUUID
+   * @return
+   */
+  public AlbumMemberInfo getAlbumMemberInfo(String albumUUID, String userUUID) {
+
+    // 유저가 album editor 인지 검증
+    if (!validAlbumEditor(albumUUID, userUUID))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
+
+    // 앨범 주인 정보 추출
+    Album album = albumRepository.findById(albumUUID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+
+    String albumOwnerUUID = album.getAlbumOwner();
+    UserInfo albumOwnerInfo = userService.getUserInfo(albumOwnerUUID);
+
+    // 앨범 공동 작업자 정보 추출
+    List<String> albumEditorsUUIDs = album.getAlbumEditors();
+    List<UserInfo> albumEditorsInfos = List.of();
+
+    for (String albumEditorUUID : albumEditorsUUIDs) {
+
+      UserInfo albumEditorInfo = userService.getUserInfo(albumEditorUUID);
+      albumEditorsInfos.add(albumEditorInfo);
+    }
+
+    // 앨범 초대 대상자 정보 추출
+    List<String> albumInviteesUUIDs = album.getAlbumInvitees();
+    List<UserInfo> albumInviteesInfos = List.of();
+
+    for (String albumInviteeUUID : albumInviteesUUIDs) {
+
+      UserInfo albumInviteeInfo = userService.getUserInfo(albumInviteeUUID);
+      albumInviteesInfos.add(albumInviteeInfo);
+    }
+
+    return AlbumMemberInfo.builder()
+        .albumOwnerInfo(albumOwnerInfo)
+        .albumEditorsInfos(albumEditorsInfos)
+        .albumInviteesInfos(albumInviteesInfos)
+        .build();
   }
 }
