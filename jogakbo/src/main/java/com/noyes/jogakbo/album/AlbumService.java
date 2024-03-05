@@ -75,8 +75,6 @@ public class AlbumService {
     return AlbumEntryMessage.builder()
         .albumName(album.getAlbumName())
         .imagesInfo(imagesInfo)
-        .thumbnailImage(album.getThumbnailImage())
-        .createdDate(album.getCreatedDate())
         .build();
   }
 
