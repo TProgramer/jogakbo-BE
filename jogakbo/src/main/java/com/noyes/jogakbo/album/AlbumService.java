@@ -483,6 +483,13 @@ public class AlbumService {
         .build();
   }
 
+  /**
+   * albumUUID를 가진 앨범의 상세정보를 AlbumDetailInfo로 반환
+   * 
+   * @param albumUUID
+   * @param userUUID
+   * @return
+   */
   public AlbumDetailInfo getAlbumDetailInfo(String albumUUID, String userUUID) {
 
     // 유저가 album editor 인지 검증
