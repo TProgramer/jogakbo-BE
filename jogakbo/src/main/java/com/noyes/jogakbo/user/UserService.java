@@ -89,11 +89,11 @@ public class UserService {
         .profileImageOriginalName("")
         .albums(new ArrayList<>())
         .friends(new ArrayList<>())
-        .sentFriendRequests(new ArrayList<>())
-        .receivedFriendRequests(new ArrayList<>())
+        .friendRequestees(new ArrayList<>())
+        .friendRequesters(new ArrayList<>())
         .role(Role.USER)
         .collaboAlbums(new ArrayList<>())
-        .receivedAlbumInvitations(new ArrayList<>())
+        .albumInviters(new ArrayList<>())
         .build();
 
     user.updateRefreshToken(newRefreshToken);
@@ -191,7 +191,7 @@ public class UserService {
     List<Friend> friends = getFriends(friendsUUIDs);
 
     // 친구 요청을 보낸 유저 정보 불러오기
-    List<String> friendRequestersUUIDs = user.getReceivedFriendRequests();
+    List<String> friendRequestersUUIDs = user.getFriendRequesters();
     List<Friend> friendRequesters = getFriends(friendRequestersUUIDs);
 
     // 소유하고 있는 앨범 정보 불러오기
@@ -203,7 +203,7 @@ public class UserService {
     List<AlbumInfo> collaboAlbums = albumService.getAlbumInfo(collaboAlbumsUUIDs);
 
     // 초대받은 앨범 정보 불러오기
-    List<String> albumInvitersUUIDs = user.getReceivedAlbumInvitations();
+    List<String> albumInvitersUUIDs = user.getAlbumInviters();
     List<AlbumInfo> albumInviters = albumService.getAlbumInfo(albumInvitersUUIDs);
 
     return UserProfile.builder()
@@ -244,7 +244,7 @@ public class UserService {
 
     List<String> filterFriendUserUUID = user.getFriends();
 
-    List<String> filterWaitingUserUUID = user.getSentFriendRequests();
+    List<String> filterWaitingUserUUID = user.getFriendRequestees();
 
     // 필터링한 Friend 목록 추출하기
     List<FriendSearchResult> searchResult = new ArrayList<>();
@@ -288,7 +288,7 @@ public class UserService {
     User requestUser = userRepository.findById(reqUserUUID).get();
 
     // 이미 요청을 보낸 대상일 경우 예외처리
-    List<String> friendRequestees = requestUser.getSentFriendRequests();
+    List<String> friendRequestees = requestUser.getFriendRequestees();
     if (isUserInFriendList(friendRequestees, resUserUUID))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 친구 요청을 보냈습니다.");
 
@@ -302,7 +302,7 @@ public class UserService {
     userRepository.save(requestUser);
 
     User responseUser = userRepository.findById(resUserUUID).get();
-    List<String> friendRequesters = responseUser.getReceivedFriendRequests();
+    List<String> friendRequesters = responseUser.getFriendRequesters();
     friendRequesters.add(reqUserUUID);
     userRepository.save(responseUser);
 
@@ -328,14 +328,14 @@ public class UserService {
     boolean isValidRequest = true;
 
     // 친구 요청을 보낸 유저인지 확인
-    List<String> friendRequestees = requestUser.getSentFriendRequests();
+    List<String> friendRequestees = requestUser.getFriendRequestees();
     if (!isUserInFriendList(friendRequestees, resUserUUID))
       isValidRequest = false;
 
     // 친구 요청을 받은 유저인지도 확인
     User responseUser = getUser(resUserUUID);
 
-    List<String> friendRequesters = responseUser.getReceivedFriendRequests();
+    List<String> friendRequesters = responseUser.getFriendRequesters();
     if (!isUserInFriendList(friendRequesters, reqUserUUID))
       isValidRequest = false;
 
@@ -357,11 +357,11 @@ public class UserService {
     }
 
     // 서로 친구 추가 요청을 보냈을 경우 예외처리
-    List<String> doubleCheckFriendRequestees = responseUser.getSentFriendRequests();
+    List<String> doubleCheckFriendRequestees = responseUser.getFriendRequestees();
     if (isUserInFriendList(doubleCheckFriendRequestees, reqUserUUID))
       doubleCheckFriendRequestees.remove(reqUserUUID);
 
-    List<String> doubleCheckFriendRequesters = requestUser.getSentFriendRequests();
+    List<String> doubleCheckFriendRequesters = requestUser.getFriendRequesters();
     if (isUserInFriendList(doubleCheckFriendRequesters, resUserUUID))
       doubleCheckFriendRequesters.remove(resUserUUID);
 
@@ -464,7 +464,7 @@ public class UserService {
   public void addAlbumInviters(@NonNull String collaboUserUUID, String albumUUID) {
 
     User user = getUser(collaboUserUUID);
-    user.getReceivedAlbumInvitations().add(albumUUID);
+    user.getAlbumInviters().add(albumUUID);
     userRepository.save(user);
   }
 
@@ -477,7 +477,7 @@ public class UserService {
   public void removeAlbumInvitation(@NonNull String resUserUUID, String albumUUID) {
 
     User user = getUser(resUserUUID);
-    user.getReceivedAlbumInvitations().remove(albumUUID);
+    user.getAlbumInviters().remove(albumUUID);
     userRepository.save(user);
   }
 

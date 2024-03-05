@@ -378,7 +378,7 @@ public class AlbumService {
     // 초대 요청을 받은 유저인지도 확인
     User responseUser = userService.getUser(resUserID);
 
-    List<String> albumInviters = responseUser.getReceivedAlbumInvitations();
+    List<String> albumInviters = responseUser.getAlbumInviters();
 
     if (!isAlbumInList(albumInviters, albumUUID))
       isValidRequest = false;

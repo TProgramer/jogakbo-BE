@@ -26,12 +26,12 @@ public class User {
   private String profileImageUrl;
   private String refreshToken;
   private List<String> friends;
-  private List<String> sentFriendRequests;
-  private List<String> receivedFriendRequests;
+  private List<String> friendRequestees;
+  private List<String> friendRequesters;
   // field for collaboration albums list
   private List<String> collaboAlbums;
   // field for recieved invitation from album owner
-  private List<String> receivedAlbumInvitations;
+  private List<String> albumInviters;
   private List<String> albums;
 
   // check flag to use @CreatedDate, @LastModified annotation with custom PK
