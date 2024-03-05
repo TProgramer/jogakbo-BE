@@ -2,6 +2,7 @@ package com.noyes.jogakbo.album;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -23,17 +24,21 @@ public class Album {
   @Id
   private String albumUUID;
   private String albumName;
+  // field with userUUID in String value
+  private String albumOwner;
   // field presents image path in AWS S3
   private String thumbnailImage;
   // field to recognize image update
-  private String thumbnailOriginalName;
-  private List<List<AlbumImageInfo>> albumImages;
-  // field with socialID in String value
-  private String albumOwner;
+  @Builder.Default
+  private String thumbnailOriginalName = "";
+  @Builder.Default
+  private List<List<AlbumImageInfo>> albumImages = new ArrayList<>(List.of());
   // field for album co-workers list
-  private List<String> albumEditors;
+  @Builder.Default
+  private List<String> albumEditors = new ArrayList<>();
   // field for invited user list
-  private List<String> albumInvitees;
+  @Builder.Default
+  private List<String> albumInvitees = new ArrayList<>();
 
   // check flag to use @CreatedDate, @LastModified annotation with custom PK
   @Version

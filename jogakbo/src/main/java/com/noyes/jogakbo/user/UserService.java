@@ -86,14 +86,6 @@ public class UserService {
         .userUUID(userUUID)
         .nickname(nickname)
         .provider(provider)
-        .profileImageOriginalName("")
-        .albums(new ArrayList<>())
-        .friends(new ArrayList<>())
-        .friendRequestees(new ArrayList<>())
-        .friendRequesters(new ArrayList<>())
-        .role(Role.USER)
-        .collaboAlbums(new ArrayList<>())
-        .albumInviters(new ArrayList<>())
         .build();
 
     user.updateRefreshToken(newRefreshToken);

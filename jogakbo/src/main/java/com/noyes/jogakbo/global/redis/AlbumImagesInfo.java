@@ -1,6 +1,7 @@
 package com.noyes.jogakbo.global.redis;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.data.redis.core.RedisHash;
 
@@ -19,5 +20,6 @@ public class AlbumImagesInfo {
 
   @Id
   private String id;
-  private List<List<AlbumImageInfo>> imagesInfo;
+  @Builder.Default
+  private List<List<AlbumImageInfo>> imagesInfo = new ArrayList<>(List.of());
 }

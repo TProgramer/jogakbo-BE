@@ -88,16 +88,11 @@ public class AlbumService {
   public String createAlbum(String albumName, String userUUID) throws JsonProcessingException {
 
     String albumUUID = UUID.randomUUID().toString();
-    List<List<AlbumImageInfo>> blankImagesProp = new ArrayList<>();
-    blankImagesProp.add(new ArrayList<>());
 
     Album newAlbum = Album.builder()
         .albumUUID(albumUUID)
         .albumName(albumName)
-        .albumImages(blankImagesProp)
         .albumOwner(userUUID)
-        .albumEditors(new ArrayList<>())
-        .albumInvitees(new ArrayList<>())
         .build();
 
     albumRepository.save(newAlbum);
@@ -106,7 +101,6 @@ public class AlbumService {
 
     AlbumImagesInfo albumImagesInfo = AlbumImagesInfo.builder()
         .id(albumUUID)
-        .imagesInfo(blankImagesProp)
         .build();
 
     redisService.setAlbumRedisValue(albumUUID, albumImagesInfo);
