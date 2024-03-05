@@ -13,10 +13,11 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.noyes.jogakbo.album.DTO.EditMessage;
-import com.noyes.jogakbo.album.DTO.EntryMessage;
-import com.noyes.jogakbo.album.DTO.ImageInfo;
-import com.noyes.jogakbo.album.DTO.ImagesInPage;
+import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
+import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
+import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
+import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
+import com.noyes.jogakbo.global.redis.AlbumImagesInfo;
 import com.noyes.jogakbo.global.redis.RedisService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.global.websocket.WebSocketSessionHolder;
@@ -38,16 +39,16 @@ public class AlbumService {
   private final AwsS3Service awsS3Service;
   private final RedisService redisService;
 
-  public EntryMessage getEntryMessage(String socialID, String albumID) throws JsonProcessingException {
+  public AlbumEntryMessage getEntryMessage(String userUUID, String albumUUID) throws JsonProcessingException {
 
     // 앨범 ID로 앨범 가져오기
-    Album album = albumRepository.findById(albumID)
+    Album album = albumRepository.findById(albumUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 앨범 ID 입니다."));
 
     // 앨범 주인이거나 공동 작업자인지 확인
     String albumOwner = album.getAlbumOwner();
     List<String> albumEditors = album.getAlbumEditors();
-    if (!albumOwner.equals(socialID) && !albumEditors.contains(socialID))
+    if (!albumOwner.equals(userUUID) && !albumEditors.contains(userUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범을 조회할 권한이 없습니다.");
 
     // 앨범 주인과 공동 작업자들의 정보 추출
@@ -67,10 +68,10 @@ public class AlbumService {
       sentAlbumInvitationsInfo.add(userService.getUserInfo(sentAlbumInvitation));
     }
 
-    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
-    return EntryMessage.builder()
+    return AlbumEntryMessage.builder()
         .albumName(album.getAlbumName())
         .imagesInfo(imagesInfo)
         .thumbnailImage(album.getThumbnailImage())
@@ -81,69 +82,65 @@ public class AlbumService {
         .build();
   }
 
-  public List<Album> getAllAlbumByUser(String socialID) {
+  public String createAlbum(String albumName, String userUUID) throws JsonProcessingException {
 
-    return userService.getAlbumsByUser(socialID);
-  }
-
-  public String createAlbum(String albumName, String socialID) throws JsonProcessingException {
-
-    String albumID = UUID.randomUUID().toString();
-    List<List<ImagesInPage>> blankImagesProp = new ArrayList<>();
+    String albumUUID = UUID.randomUUID().toString();
+    List<List<AlbumImageInfo>> blankImagesProp = new ArrayList<>();
     blankImagesProp.add(new ArrayList<>());
 
     Album newAlbum = Album.builder()
-        .albumID(albumID)
+        .albumUUID(albumUUID)
         .albumName(albumName)
-        .images(blankImagesProp)
-        .albumOwner(socialID)
+        .albumImages(blankImagesProp)
+        .albumOwner(userUUID)
         .albumEditors(new ArrayList<>())
         .sentAlbumInvitations(new ArrayList<>())
         .build();
 
     albumRepository.save(newAlbum);
 
-    userService.addAlbum(newAlbum, socialID);
+    userService.addAlbum(newAlbum, userUUID);
 
     AlbumImagesInfo albumImagesInfo = AlbumImagesInfo.builder()
-        .id(albumID)
+        .id(albumUUID)
         .imagesInfo(blankImagesProp)
         .build();
 
-    redisService.setAlbumRedisValue(albumID, albumImagesInfo);
+    redisService.setAlbumRedisValue(albumUUID, albumImagesInfo);
 
-    return albumID;
+    return albumUUID;
   }
 
-  public List<List<ImagesInPage>> addNewPage(String albumID) throws JsonProcessingException {
+  public List<List<AlbumImageInfo>> addNewPage(String albumUUID) throws JsonProcessingException {
 
-    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
     imagesInfo.add(new ArrayList<>());
-    redisService.setAlbumRedisValue(albumID, targetInfo);
+    redisService.setAlbumRedisValue(albumUUID, targetInfo);
 
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> uploadImages(String albumID, List<MultipartFile> multipartFiles, String fileInfos)
+  public List<List<AlbumImageInfo>> uploadImages(String albumUUID, List<MultipartFile> multipartFiles, String fileInfos)
       throws JsonProcessingException {
 
     // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
-    List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles, albumID);
+    List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles, albumUUID);
 
     ObjectMapper objectMapper = new ObjectMapper();
-    List<ImageInfo> imageInfos = objectMapper.readValue(fileInfos, new TypeReference<List<ImageInfo>>() {
-    });
+    List<AlbumImageEditInfo> imageInfos = objectMapper.readValue(fileInfos,
+        new TypeReference<List<AlbumImageEditInfo>>() {
+        });
 
-    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
     for (int i = 0; i < uploadFileNames.size(); i++) {
 
-      int pageNum = imageInfos.get(i).getPage();
-      List<ImagesInPage> targetPageInfo = imagesInfo.get(pageNum);
-      ImagesInPage tmp = ImagesInPage.builder()
-          .imageUUID(uploadFileNames.get(i))
+      int pageNum = imageInfos.get(i).getPageNum();
+      List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
+      AlbumImageInfo tmp = AlbumImageInfo.builder()
+          .albumImageUUID(uploadFileNames.get(i))
           .size(imageInfos.get(i).getSize())
           .location(imageInfos.get(i).getLocation())
           .rotation(imageInfos.get(i).getRotation())
@@ -154,51 +151,53 @@ public class AlbumService {
     }
 
     log.info(imagesInfo.toString());
-    redisService.setAlbumRedisValue(albumID, targetInfo);
+    redisService.setAlbumRedisValue(albumUUID, targetInfo);
 
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> unloadImage(String albumID, int pageNum, String imageUUID)
+  public List<List<AlbumImageInfo>> unloadImage(String albumUUID, String imageUUID)
       throws JsonProcessingException {
 
-    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
-    List<ImagesInPage> targetList = imagesInfo.get(pageNum);
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
-    for (ImagesInPage tmp : targetList) {
+    for (List<AlbumImageInfo> imagesInfoByPage : imagesInfo) {
+      for (AlbumImageInfo imageInfo : imagesInfoByPage) {
 
-      if (tmp.getImageUUID().equals(imageUUID)) {
+        if (imageInfo.getAlbumImageUUID().equals(imageUUID)) {
 
-        targetList.remove(tmp);
-        break;
+          imagesInfoByPage.remove(imageInfo);
+          break;
+        }
       }
     }
-    redisService.setAlbumRedisValue(albumID, targetInfo);
+    redisService.setAlbumRedisValue(albumUUID, targetInfo);
 
-    awsS3Service.deleteFile(imageUUID, albumID);
+    awsS3Service.deleteFile(imageUUID, albumUUID);
 
     return imagesInfo;
   }
 
-  public List<List<ImagesInPage>> editImage(String albumID, List<EditMessage> payload) throws JsonProcessingException {
+  public List<List<AlbumImageInfo>> editImage(String albumUUID, List<AlbumImageEditMessage> payload)
+      throws JsonProcessingException {
 
-    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumID, AlbumImagesInfo.class);
-    List<List<ImagesInPage>> imagesInfo = targetInfo.getImagesInfo();
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
-    for (EditMessage target : payload) {
+    for (AlbumImageEditMessage target : payload) {
 
-      int pageNum = target.getImageInfo().getPage();
-      List<ImagesInPage> targetPageInfo = imagesInfo.get(pageNum);
+      int pageNum = target.getAlbumImageEditInfo().getPageNum();
+      List<AlbumImageInfo> targetPageInfo = imagesInfo.get(pageNum);
 
       // To-Do: imageUUID가 같은지 확인하는 효율적인 로직 찾아보기
-      for (ImagesInPage tmp : targetPageInfo) {
+      for (AlbumImageInfo tmp : targetPageInfo) {
 
-        if (tmp.getImageUUID().equals(target.getImageUUID())) {
+        if (tmp.getAlbumImageUUID().equals(target.getAlbumImageUUID())) {
 
-          tmp.setLocation(target.getImageInfo().getLocation());
-          tmp.setSize(target.getImageInfo().getSize());
-          tmp.setRotation(target.getImageInfo().getRotation());
+          tmp.setLocation(target.getAlbumImageEditInfo().getLocation());
+          tmp.setSize(target.getAlbumImageEditInfo().getSize());
+          tmp.setRotation(target.getAlbumImageEditInfo().getRotation());
 
           targetPageInfo.add(tmp);
           targetPageInfo.remove(tmp);
@@ -209,7 +208,7 @@ public class AlbumService {
     }
 
     // albumImagesInfoRepository.save(targetInfo);
-    redisService.setAlbumRedisValue(albumID, targetInfo);
+    redisService.setAlbumRedisValue(albumUUID, targetInfo);
 
     return imagesInfo;
   }
@@ -221,14 +220,14 @@ public class AlbumService {
    * @param
    * @return 실행 결과
    */
-  public String updateProfile(String albumID, String newAlbumName, MultipartFile thumnailImage,
-      @NonNull String socialID) {
+  public String updateProfile(String albumUUID, String newAlbumName, MultipartFile thumnailImage,
+      @NonNull String userUUID) {
 
-    Album album = albumRepository.findById(albumID)
+    Album album = albumRepository.findById(albumUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 앨범 ID 입니다."));
 
     // 요청자가 albumOwner 인지 검증
-    if (!socialID.equals(album.getAlbumOwner()))
+    if (!userUUID.equals(album.getAlbumOwner()))
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "앨범 소유자만 앨범 프로필을 수정할 수 있습니다.");
 
     // 기존 albumName과 동일한지 확인 후 수정
@@ -241,13 +240,13 @@ public class AlbumService {
     if (thumnailImage != null && !thumnailImage.getOriginalFilename().equals(oldThumbnailOriginalName)) {
 
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 받아오기
-      String uploadFileName = awsS3Service.uploadFile(thumnailImage, albumID);
+      String uploadFileName = awsS3Service.uploadFile(thumnailImage, albumUUID);
 
       album.setThumbnailImage(uploadFileName);
       album.setThumbnailOriginalName(thumnailImage.getOriginalFilename());
 
       // 기존 thumbnailImage 삭제
-      awsS3Service.deleteFile(oldThumbnailOriginalName, albumID);
+      awsS3Service.deleteFile(oldThumbnailOriginalName, albumUUID);
     }
 
     albumRepository.save(album);
@@ -255,37 +254,37 @@ public class AlbumService {
     return "프로필을 성공적으로 변경했습니다.";
   }
 
-  public String removeAlbum(String albumID, String socialID) throws IOException {
+  public String removeAlbum(String albumUUID, String userUUID) throws IOException {
 
     // albumID로 앨범 조회
-    Album album = albumRepository.findById(albumID).get();
+    Album album = albumRepository.findById(albumUUID).get();
 
     // 앨범 소유자의 요청인지 검증
-    if (!album.getAlbumOwner().equals(socialID))
+    if (!album.getAlbumOwner().equals(userUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범 소유자만 앨범을 삭제할 수 있습니다.");
 
     // 앨범에 조회를 막아 추가 입장을 막기 위해 mongoDB에서 Album Entity 삭제
-    albumRepository.deleteById(albumID);
+    albumRepository.deleteById(albumUUID);
 
     // 모두를 앨범에서 강제 추방함을 알리고 소켓 연결 종료
-    WebSocketSessionHolder.closeSessionByDestination(albumID);
+    WebSocketSessionHolder.closeSessionByDestination(albumUUID);
 
     // 최신 데이터를 참조하기 위해 redis를 기준으로 이미지 정보 불러오기
-    List<List<ImagesInPage>> imagesInfo = redisService
-        .getAlbumRedisValue(albumID, AlbumImagesInfo.class)
+    List<List<AlbumImageInfo>> imagesInfo = redisService
+        .getAlbumRedisValue(albumUUID, AlbumImagesInfo.class)
         .getImagesInfo();
 
     // 앨범에 업로드된 이미지들을 순회하며 S3 이미지 삭제
     // To-do: S3 SDK의 deleteObjects 메소드로 한번에 삭제 방식으로 전환 및 예외처리 추가
-    for (List<ImagesInPage> imagesInfoOfIndex : imagesInfo) {
-      for (ImagesInPage imageInfo : imagesInfoOfIndex) {
+    for (List<AlbumImageInfo> imagesInfoOfIndex : imagesInfo) {
+      for (AlbumImageInfo imageInfo : imagesInfoOfIndex) {
 
-        awsS3Service.deleteFile(imageInfo.getImageUUID(), albumID);
+        awsS3Service.deleteFile(imageInfo.getAlbumImageUUID(), albumUUID);
       }
     }
 
     // redis에서 AlbumImagesInfo 삭제
-    redisService.removeAlbumRedisValue(albumID);
+    redisService.removeAlbumRedisValue(albumUUID);
 
     return "앨범 삭제 작업을 완료했습니다.";
   }
@@ -293,27 +292,27 @@ public class AlbumService {
   /**
    * 유저가 albumEditors 에 속해있는지 검증
    * 
-   * @param albumID
-   * @param socialID
+   * @param albumUUID
+   * @param userUUID
    * @return
    */
-  public Boolean validAlbumEditor(String albumID, String socialID) {
+  public Boolean validAlbumEditor(String albumUUID, String userUUID) {
 
     // DB에서 albumID로 Album 객체 접근 후, albumOwner와 albumEditors 필드 추출
-    Album album = albumRepository.findById(albumID)
+    Album album = albumRepository.findById(albumUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범입니다."));
 
     String albumOwnerID = album.getAlbumOwner();
     List<String> albumEditors = album.getAlbumEditors();
 
     // albumOwner 인 경우, true 반환
-    if (albumOwnerID.equals(socialID))
+    if (albumOwnerID.equals(userUUID))
       return true;
 
     // 순회를 돌며 인자로 받은 socialID가 List에 포함되어 있다면 true를 반환
     for (String albumEditor : albumEditors) {
 
-      if (albumEditor.equals(socialID))
+      if (albumEditor.equals(userUUID))
         return true;
     }
 
@@ -322,31 +321,31 @@ public class AlbumService {
   }
 
   /**
-   * collaboUserID에 해당하는 유저에게 앨범 초대 보내기
+   * collaboUserUUID에 해당하는 유저에게 앨범 초대 보내기
    * 
    * @param
    * @return
    */
-  public Album sendAlbumInvitation(String albumID, String collaboUserID, String socialID) {
+  public Album sendAlbumInvitation(String albumUUID, String collaboUserUUID, String userUUID) {
 
     // 요청자가 album의 소유자인지 검증
-    Album album = albumRepository.findById(albumID)
+    Album album = albumRepository.findById(albumUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
 
     // 이미 요청을 보낸 대상일 경우 예외처리
     List<String> sentAlbumInvitations = album.getSentAlbumInvitations();
 
-    if (isUserInList(sentAlbumInvitations, collaboUserID) != null)
+    if (isUserInList(sentAlbumInvitations, collaboUserUUID) != null)
       return null;
 
     // 이미 초대된 경우도 예외처리
     List<String> albumEditors = album.getAlbumEditors();
-    if (isUserInList(albumEditors, collaboUserID) != null)
+    if (isUserInList(albumEditors, collaboUserUUID) != null)
       return null;
 
     // 앨범 초대 리스트에 등록
-    sentAlbumInvitations.add(collaboUserID);
-    userService.addReceivedAlbumInvitations(collaboUserID, album);
+    sentAlbumInvitations.add(collaboUserUUID);
+    userService.addReceivedAlbumInvitations(collaboUserUUID, album);
 
     albumRepository.save(album);
 
@@ -356,18 +355,18 @@ public class AlbumService {
   /**
    * 응답 메세지에 따라 앨범 작업자로 추가 후, 초대 요청 리스트에서 이전 요청 제거
    * 
-   * @param albumID
+   * @param albumUUID
    * @param resUserID
    * @param reply
    * @return result in String
    */
-  public String replyAlbumInvitation(@NonNull String albumID, @NonNull String resUserID, String reply) {
+  public String replyAlbumInvitation(@NonNull String albumUUID, @NonNull String resUserID, String reply) {
 
     // 보낸|받은 요청 유효성 판별 변수 추가
     boolean isValidRequest = true;
 
     // 초대 요청을 보낸 앨범인지 확인
-    Album requestAlbum = albumRepository.findById(albumID)
+    Album requestAlbum = albumRepository.findById(albumUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
 
     List<String> sentAlbumInvitations = requestAlbum.getSentAlbumInvitations();
@@ -383,14 +382,14 @@ public class AlbumService {
 
     List<Album> receivedAlbumInvitations = responseUser.getReceivedAlbumInvitations();
 
-    Album callAlbum = isAlbumInList(receivedAlbumInvitations, albumID);
+    Album callAlbum = isAlbumInList(receivedAlbumInvitations, albumUUID);
 
     if (callAlbum == null)
       isValidRequest = false;
 
     // 서로의 요청, 승인 대기열에서 삭제
     sentAlbumInvitations.remove(targetUser);
-    userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumID());
+    userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumUUID());
 
     albumRepository.save(requestAlbum);
 
@@ -410,15 +409,15 @@ public class AlbumService {
   }
 
   /**
-   * List에 collaboUserID가 존재하는지 판별
+   * List에 collaboUserUUID가 존재하는지 판별
    * 
    * @param
    */
-  public String isUserInList(List<String> stringList, String socialID) {
+  public String isUserInList(List<String> stringList, String userUUID) {
 
     for (String stringPiece : stringList) {
 
-      if (stringPiece.equals(socialID))
+      if (stringPiece.equals(userUUID))
         return stringPiece;
     }
     return null;
@@ -430,11 +429,11 @@ public class AlbumService {
    * @param
    * @return
    */
-  public Album isAlbumInList(List<Album> albumList, String albumID) {
+  public Album isAlbumInList(List<Album> albumList, String albumUUID) {
 
     for (Album albumPiece : albumList) {
 
-      if (albumPiece.getAlbumID().equals(albumID))
+      if (albumPiece.getAlbumUUID().equals(albumUUID))
         return albumPiece;
     }
     return null;

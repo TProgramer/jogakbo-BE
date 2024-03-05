@@ -10,18 +10,15 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.user.DTO.Friend;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Component
 public class SseEmitters {
 
   // onCompletion가 다른 쓰레드에서 실행되기에 thread-safe한 ConcurrentHashMap 활용
   private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-  public SseEmitter add(String socialID, SseEmitter emitter) {
+  public SseEmitter add(String userUUID, SseEmitter emitter) {
 
-    this.emitters.put(socialID, emitter);
+    this.emitters.put(userUUID, emitter);
 
     emitter.onCompletion(() -> this.emitters.values().remove(emitter));
 
@@ -30,11 +27,11 @@ public class SseEmitters {
     return emitter;
   }
 
-  public String sendFriendRequestAlarm(String socialID, Friend requestUser) {
+  public String sendFriendRequestAlarm(String userUUID, Friend requestUser) {
 
     try {
 
-      this.emitters.get(socialID).send(SseEmitter.event()
+      this.emitters.get(userUUID).send(SseEmitter.event()
           .name("friendRequest")
           .data(requestUser));
 
@@ -51,17 +48,18 @@ public class SseEmitters {
   }
 
   /**
-   * send SSE alarm to user corresponding `collaboUserID` with `requestAlbum` info
+   * send SSE alarm to user corresponding `collaboUserUUID` with `requestAlbum`
+   * info
    * 
-   * @param socialID
+   * @param userUUID
    * @param requestAlbum
    * @return Result info in String
    */
-  public String sendAlbumInvitation(String collaboUserID, Album requestAlbum) {
+  public String sendAlbumInvitation(String collaboUserUUID, Album requestAlbum) {
 
     try {
 
-      this.emitters.get(collaboUserID).send(SseEmitter.event()
+      this.emitters.get(collaboUserUUID).send(SseEmitter.event()
           .name("albumInvitation")
           .data(requestAlbum));
 

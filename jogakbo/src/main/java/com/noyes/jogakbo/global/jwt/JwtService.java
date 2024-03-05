@@ -2,15 +2,15 @@ package com.noyes.jogakbo.global.jwt;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.noyes.jogakbo.global.exception.InvalidLoginTokenException;
 import com.noyes.jogakbo.user.UserRepository;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException.Unauthorized;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,9 +44,9 @@ public class JwtService {
    */
   private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
   private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
-  private static final String PROVIDER_CLAIM = "provider";
-  private static final String ID_CLAIM = "socialId";
-  private static final String NAME_CLAIM = "name";
+  private static final String PROVIDER_CLAIM = "Provider";
+  private static final String ID_CLAIM = "UserUUID";
+  private static final String NAME_CLAIM = "Nickname";
   private static final String BEARER = "Bearer ";
 
   private final UserRepository userRepository;
@@ -54,16 +54,16 @@ public class JwtService {
   /**
    * AccessToken 생성 메소드
    */
-  public String createAccessToken(String socialId) {
+  public String createAccessToken(String userUUID) {
     Date now = new Date();
     return JWT.create() // JWT 토큰을 생성하는 빌더 반환
         .withSubject(ACCESS_TOKEN_SUBJECT) // JWT의 Subject 지정
         .withExpiresAt(new Date(now.getTime() + accessTokenExpirationPeriod)) // 토큰 만료 시간 설정
 
-        // 클레임으로는 저희는 socialId 하나만 사용
+        // 클레임으로는 저희는 userUUID 하나만 사용
         // 추가적으로 식별자나, 이름 등의 정보를 더 추가 가능
         // 추가할 경우 .withClaim(클래임 이름, 클래임 값) 으로 설정
-        .withClaim(ID_CLAIM, socialId)
+        .withClaim(ID_CLAIM, userUUID)
         .sign(Algorithm.HMAC512(secretKey)); // HMAC512 알고리즘 사용
   }
 
@@ -142,13 +142,13 @@ public class JwtService {
     }
   }
 
-  public Optional<String> extractSocialId(String accessToken) {
+  public Optional<String> extractUserUUID(String accessToken) {
     try {
       // 토큰 유효성 검사하는 데에 사용할 알고리즘이 있는 JWT verifier builder 반환
       return Optional.ofNullable(JWT.require(Algorithm.HMAC512(secretKey))
           .build() // 반환된 빌더로 JWT verifier 생성
           .verify(accessToken) // accessToken을 검증하고 유효하지 않다면 예외 발생
-          .getClaim(ID_CLAIM) // claim(SocialID) 가져오기
+          .getClaim(ID_CLAIM) // claim(UserUUID) 가져오기
           .asString());
     } catch (Exception e) {
       log.error("액세스 토큰이 유효하지 않습니다.");
@@ -162,7 +162,7 @@ public class JwtService {
       return Optional.ofNullable(JWT.require(Algorithm.HMAC512(secretKey))
           .build() // 반환된 빌더로 JWT verifier 생성
           .verify(accessToken) // accessToken을 검증하고 유효하지 않다면 예외 발생
-          .getClaim(NAME_CLAIM) // claim(SocialID) 가져오기
+          .getClaim(NAME_CLAIM) // claim(Nickname) 가져오기
           .asString());
     } catch (Exception e) {
       log.error("액세스 토큰이 유효하지 않습니다.");
@@ -187,8 +187,8 @@ public class JwtService {
   /**
    * RefreshToken DB 저장(업데이트)
    */
-  public void updateRefreshToken(String socialId, String refreshToken) {
-    userRepository.findById(socialId)
+  public void updateRefreshToken(String userUUID, String refreshToken) {
+    userRepository.findById(userUUID)
         .ifPresentOrElse(
             user -> user.updateRefreshToken(refreshToken),
             () -> new Exception("일치하는 회원이 없습니다."));
@@ -200,7 +200,7 @@ public class JwtService {
       return true;
     } catch (Exception e) {
       log.error("유효하지 않은 토큰입니다. {}", e.getMessage());
-      throw new InvalidLoginTokenException("유효하지 않은 인증 토큰입니다.");
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 인증 토큰입니다.");
     }
   }
 }

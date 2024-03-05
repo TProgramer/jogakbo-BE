@@ -10,10 +10,10 @@ import lombok.Data;
 
 @Data
 @Builder
-public class EntryMessage {
+public class AlbumEntryMessage {
 
   private String albumName;
-  private List<List<ImagesInPage>> imagesInfo;
+  private List<List<AlbumImageInfo>> imagesInfo;
   private String thumbnailImage;
   private LocalDateTime createdDate;
   private UserInfo albumOwnerInfo;

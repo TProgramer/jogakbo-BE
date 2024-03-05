@@ -11,7 +11,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
   Optional<User> findByRefreshToken(String refreshToken);
 
-  Optional<List<User>> findAllByNicknameContainsAndSocialIDNot(String nickname, String socialID);
+  Optional<List<User>> findAllByNicknameContainsAndUserUUIDNot(String nickname, String socialID);
 
-  void deleteBySocialID(String socialID);
+  void deleteByUserUUID(String socialID);
 }

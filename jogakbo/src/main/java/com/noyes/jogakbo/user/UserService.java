@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,44 +36,20 @@ public class UserService {
   private final JwtService jwtService;
   private final AwsS3Service awsS3Service;
 
-  /**
-   * User 생성
-   * JPA Repository의 save Method를 사용하여 객체를 생성
-   * Entity인 Model 객체에 @Id로 설정한 키 값이 없을 경우 해당하는 데이터를 추가
-   * 만약 추가하려는 Entity인 Model 객체에 @Id 값이 이미 존재하면 갱신되기 때문에
-   * 아래와 같이 추가하고자 하는 User가 존재하는지 체크하는 로직을 추가
-   * 
-   * @param model
-   * @return
-   */
-  public void signUp(UserSignUpDTO userSignUpDto) throws Exception {
-
-    if (userRepository.findById(userSignUpDto.getSocialId()).isPresent())
-      throw new Exception("이미 존재하는 이메일입니다.");
-
-    User user = User.builder()
-        .socialID(userSignUpDto.getSocialId())
-        .nickname(userSignUpDto.getNickname())
-        .role(Role.USER)
-        .build();
-
-    userRepository.save(user);
-  }
-
   public Optional<User> checkUser(HttpServletResponse response, String accessToken) {
 
-    String socialID = jwtService.extractSocialId(accessToken).get();
-    Optional<User> targetUser = userRepository.findById(socialID);
+    String userUUID = jwtService.extractUserUUID(accessToken).get();
+    Optional<User> targetUser = userRepository.findById(userUUID);
 
     if (targetUser.isPresent())
-      return updateToken(response, socialID, targetUser);
+      return updateToken(response, userUUID, targetUser);
 
-    return registUser(response, socialID, accessToken);
+    return registUser(response, userUUID, accessToken);
   }
 
-  public Optional<User> updateToken(HttpServletResponse response, String socialID, Optional<User> targetUser) {
+  public Optional<User> updateToken(HttpServletResponse response, String userUUID, Optional<User> targetUser) {
 
-    String newAccessToken = jwtService.createAccessToken(socialID);
+    String newAccessToken = jwtService.createAccessToken(userUUID);
     String newRefreshToken = jwtService.createRefreshToken();
 
     // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
@@ -84,15 +59,15 @@ public class UserService {
     user.updateRefreshToken(newRefreshToken);
     userRepository.save(user);
     log.info("=============================================");
-    log.info("로그인에 성공하였습니다. socialID : {}", socialID);
+    log.info("로그인에 성공하였습니다. userUUID : {}", userUUID);
     log.info("AccessToken : {}", newAccessToken);
 
     return targetUser;
   }
 
-  public Optional<User> registUser(HttpServletResponse response, String socialID, String accessToken) {
+  public Optional<User> registUser(HttpServletResponse response, String userUUID, String accessToken) {
 
-    String newAccessToken = jwtService.createAccessToken(socialID);
+    String newAccessToken = jwtService.createAccessToken(userUUID);
     String newRefreshToken = jwtService.createRefreshToken();
 
     // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
@@ -105,7 +80,7 @@ public class UserService {
     String provider = jwtService.extractProvider(accessToken).get();
 
     User user = User.builder()
-        .socialID(socialID)
+        .userUUID(userUUID)
         .nickname(nickname)
         .provider(provider)
         .profileImageOriginalName("")
@@ -121,7 +96,7 @@ public class UserService {
     user.updateRefreshToken(newRefreshToken);
     userRepository.save(user);
     log.info("=============================================");
-    log.info("로그인에 성공하였습니다. socialID : {}", socialID);
+    log.info("로그인에 성공하였습니다. userUUID : {}", userUUID);
     log.info("AccessToken : {}", newAccessToken);
 
     return Optional.ofNullable(user);
@@ -141,14 +116,14 @@ public class UserService {
           String reIssuedRefreshToken = jwtService.createRefreshToken();
           user.updateRefreshToken(reIssuedRefreshToken);
           userRepository.save(user);
-          jwtService.sendAccessAndRefreshToken(response, jwtService.createAccessToken(user.getSocialID()),
+          jwtService.sendAccessAndRefreshToken(response, jwtService.createAccessToken(user.getUserUUID()),
               reIssuedRefreshToken);
         });
   }
 
-  public void deleteRefreshToken(HttpServletResponse response, String socialID) {
+  public void deleteRefreshToken(HttpServletResponse response, String userUUID) {
 
-    Optional<User> targetUser = getUser(socialID);
+    Optional<User> targetUser = getUser(userUUID);
 
     if (!targetUser.isPresent()) {
 
@@ -165,63 +140,24 @@ public class UserService {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  public Album getAlbumByUser(@NonNull String socialID, String albumID) {
+  public Album getAlbumByUser(@NonNull String userUUID, String albumID) {
 
-    List<Album> albums = userRepository.findById(socialID).get().getAlbums();
+    List<Album> albums = userRepository.findById(userUUID).get().getAlbums();
     for (Album album : albums) {
 
-      if (album.getAlbumID().equals(albumID))
+      if (album.getAlbumUUID().equals(albumID))
         return album;
     }
 
     return null;
   }
 
-  public List<Album> getAlbumsByUser(@NonNull String socialID) {
+  public void addAlbum(Album newAlbum, @NonNull String userUUID) {
 
-    return userRepository.findById(socialID).get().getAlbums();
-  }
-
-  public void addAlbum(Album newAlbum, @NonNull String socialID) {
-
-    User targetUser = userRepository.findById(socialID).get();
+    User targetUser = userRepository.findById(userUUID).get();
     List<Album> albums = targetUser.getAlbums();
     albums.add(newAlbum);
     userRepository.save(targetUser);
-  }
-
-  /**
-   * User 수정
-   * JPA Repository의 save Method를 사용하여 객체를 갱신
-   * Entity인 Model 객체에 @Id로 설정한 키 값이 존재할 경우 해당하는 데이터를 갱신
-   * 만약 수정하려는 Entity인 Model 객체에 @Id 값이 존재하지 않으면 데이터가 추가되기 때문에
-   * 아래와 같이 갱신하고자 하는 User가 존재하는지 체크하는 로직을 추가
-   *
-   * @param model
-   * @return
-   */
-  public User updateUserInfo(UserDetails token, UserUpdateDTO updateData) {
-
-    User updatedUser = null;
-
-    try {
-
-      if (updateData.isUserUpdateEmpty())
-        throw new Exception("Required info is not qualified");
-
-      User existUser = getUser(token.getUsername()).get();
-
-      existUser.setNickname(updateData.getNickname());
-
-      // if (!ObjectUtils.isEmpty(existUser))
-      // updatedUser = userRepository.save(model);
-
-    } catch (Exception e) {
-
-      log.info("[Fail] e: " + e.toString());
-    }
-
-    return updatedUser;
   }
 
   /**
@@ -243,13 +179,13 @@ public class UserService {
    * @param id
    * @return
    */
-  public Optional<User> getUser(@NonNull String socialID) {
+  public Optional<User> getUser(@NonNull String userUUID) {
 
-    return userRepository.findById(socialID);
+    return userRepository.findById(userUUID);
   }
 
   /**
-   * socialID 에 해당하는 UserInfo 반환
+   * userUUID 에 해당하는 UserInfo 반환
    * JPA Repository의 findBy Method를 사용하여 특정 User를 조회
    * find 메소드는 NULL 값일 수도 있으므로 Optional<T>를 반환하지만,
    * Optional 객체의 get() 메소드를 통해 Entity로 변환해서 반환함.
@@ -257,13 +193,13 @@ public class UserService {
    * @param
    * @return
    */
-  public UserInfo getUserInfo(@NonNull String socialID) {
+  public UserInfo getUserInfo(@NonNull String userUUID) {
 
-    User user = userRepository.findById(socialID)
+    User user = userRepository.findById(userUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지않은 유저 ID 입니다."));
 
     return UserInfo.builder()
-        .socialID(user.getSocialID())
+        .userUUID(user.getUserUUID())
         .nickname(user.getNickname())
         .profileImageURL(user.getProfileImageUrl()).build();
   }
@@ -272,12 +208,12 @@ public class UserService {
    * Id에 해당하는 User의 Profile 반환
    * 클래스 내의 getUser() Method를 사용하여 특정 User 객체를 얻어 처리함
    * 
-   * @param socialID
+   * @param userUUID
    * @return
    */
-  public UserProfile getUserProfile(String socialID) {
+  public UserProfile getUserProfile(String userUUID) {
 
-    User user = getUser(socialID).get();
+    User user = getUser(userUUID).get();
 
     return UserProfile.builder()
         .nickname(user.getNickname())
@@ -297,9 +233,9 @@ public class UserService {
    * 
    * @param id
    */
-  public void deleteUser(String socialID) {
+  public void deleteUser(String userUUID) {
 
-    userRepository.deleteBySocialID(socialID);
+    userRepository.deleteByUserUUID(userUUID);
   }
 
   /**
@@ -308,22 +244,22 @@ public class UserService {
    * 
    * @param id
    */
-  public List<FriendSearchResult> searchFriend(String nickname, @NonNull String socialID) {
+  public List<FriendSearchResult> searchFriend(String nickname, @NonNull String userUUID) {
 
     // nickname을 기준으로 본인을 제외한 유저 불러오기
-    List<User> targetUsers = userRepository.findAllByNicknameContainsAndSocialIDNot(nickname, socialID).get();
+    List<User> targetUsers = userRepository.findAllByNicknameContainsAndUserUUIDNot(nickname, userUUID).get();
 
     // 이미 친구인 유저나 이미 요청을 보낸 유저ID 불러오기
-    User user = userRepository.findById(socialID).get();
+    User user = userRepository.findById(userUUID).get();
 
     List<String> filterFriendUsername = user.getFriends()
         .stream()
-        .map(Friend::getSocialID)
+        .map(Friend::getUserUUID)
         .collect(Collectors.toList());
 
     List<String> filterWaitingUsername = user.getSentFriendRequests()
         .stream()
-        .map(Friend::getSocialID)
+        .map(Friend::getUserUUID)
         .collect(Collectors.toList());
 
     // 필터링한 Friend 목록 추출하기
@@ -333,16 +269,16 @@ public class UserService {
 
       FriendStatus friendStatus;
 
-      if (filterFriendUsername.contains(target.getSocialID()))
+      if (filterFriendUsername.contains(target.getUserUUID()))
         friendStatus = FriendStatus.FRIEND;
-      else if (filterWaitingUsername.contains(target.getSocialID()))
+      else if (filterWaitingUsername.contains(target.getUserUUID()))
         friendStatus = FriendStatus.WAITING;
       else
         friendStatus = FriendStatus.STRANGER;
 
       Friend friend = Friend.builder()
           .nickname(target.getNickname())
-          .socialID(target.getSocialID())
+          .userUUID(target.getUserUUID())
           .profileImageURL(target.getProfileImageUrl())
           .build();
 
@@ -361,7 +297,7 @@ public class UserService {
    * socialID에 해당하는 User에게 친구 신청 보내기
    * JPA Repository의 findBy Method를 사용하여 특정 User 조회
    * 
-   * @param socialID
+   * @param userUUID
    */
   public Friend sendFriendRequest(@NonNull String reqUserID, @NonNull String resUserID) {
 
@@ -382,7 +318,7 @@ public class UserService {
 
     Friend responseFreind = Friend.builder()
         .nickname(responseUser.getNickname())
-        .socialID(responseUser.getSocialID())
+        .userUUID(responseUser.getUserUUID())
         .profileImageURL(responseUser.getProfileImageUrl())
         .build();
 
@@ -390,7 +326,7 @@ public class UserService {
 
     Friend requestFreind = Friend.builder()
         .nickname(requestUser.getNickname())
-        .socialID(requestUser.getSocialID())
+        .userUUID(requestUser.getUserUUID())
         .profileImageURL(requestUser.getProfileImageUrl())
         .build();
 
@@ -406,7 +342,7 @@ public class UserService {
    * socialID에 해당하는 User에게 친구 신청 보내기
    * JPA Repository의 findBy Method를 사용하여 특정 User 조회
    * 
-   * @param socialID
+   * @param userUUID
    */
   public String replyFriendRequest(@NonNull String reqUserID, @NonNull String resUserID, String reply) {
 
@@ -471,13 +407,13 @@ public class UserService {
   /**
    * socialID에 해당하는 Friend를 List에서 찾기
    * 
-   * @param socialID
+   * @param userUUID
    */
-  public Friend isUserInFriendList(List<Friend> friendList, String socialID) {
+  public Friend isUserInFriendList(List<Friend> friendList, String userUUID) {
 
     for (Friend friend : friendList) {
 
-      if (friend.getSocialID().equals(socialID))
+      if (friend.getUserUUID().equals(userUUID))
         return friend;
     }
     return null;
@@ -487,12 +423,12 @@ public class UserService {
    * socialID에 해당하는 User를 친구 목록에서 삭제하기
    * JPA Repository의 findBy Method를 사용하여 특정 User에 접근하여 삭제
    * 
-   * @param socialID
+   * @param userUUID
    */
-  public String removeFriend(@NonNull String targetUserID, @NonNull String socialID) {
+  public String removeFriend(@NonNull String targetUserID, @NonNull String userUUID) {
 
     // 친구 목록에서 삭제 작업
-    User user = userRepository.findById(socialID).get();
+    User user = userRepository.findById(userUUID).get();
     List<Friend> friends = user.getFriends();
 
     Friend target = isUserInFriendList(friends, targetUserID);
@@ -508,7 +444,7 @@ public class UserService {
     User targetUser = userRepository.findById(targetUserID).get();
     List<Friend> targetFriends = targetUser.getFriends();
 
-    Friend targetFriend = isUserInFriendList(targetFriends, socialID);
+    Friend targetFriend = isUserInFriendList(targetFriends, userUUID);
 
     if (targetFriend != null)
       targetFriends.remove(targetFriend);
@@ -528,9 +464,9 @@ public class UserService {
    * @param
    * @return 실행 결과
    */
-  public String updateProfile(String newNickname, MultipartFile profileImage, @NonNull String socialID) {
+  public String updateProfile(String newNickname, MultipartFile profileImage, @NonNull String userUUID) {
 
-    User user = userRepository.findById(socialID)
+    User user = userRepository.findById(userUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 유저 ID 입니다."));
 
     // 기존 nickname과 동일한지 확인 후 수정
@@ -542,14 +478,14 @@ public class UserService {
     if (profileImage != null && !profileImageOriginalName.equals(profileImage.getOriginalFilename())) {
 
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
-      String uploadFileName = awsS3Service.uploadFile(profileImage, socialID);
+      String uploadFileName = awsS3Service.uploadFile(profileImage, userUUID);
 
       // 새로운 profileImage 정보로 User entity 업데이트
       user.setProfileImageUrl(uploadFileName);
       user.setProfileImageOriginalName(profileImage.getOriginalFilename());
 
       // 기존의 profileImage 삭제
-      awsS3Service.deleteFile(profileImageOriginalName, socialID);
+      awsS3Service.deleteFile(profileImageOriginalName, userUUID);
     }
 
     userRepository.save(user);
@@ -558,14 +494,14 @@ public class UserService {
   }
 
   /**
-   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * collaboUserUUID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
    * 
-   * @param collaboUserID
+   * @param collaboUserUUID
    * @param album
    */
-  public void addReceivedAlbumInvitations(@NonNull String collaboUserID, Album album) {
+  public void addReceivedAlbumInvitations(@NonNull String collaboUserUUID, Album album) {
 
-    User user = userRepository.findById(collaboUserID)
+    User user = userRepository.findById(collaboUserUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
 
     user.getReceivedAlbumInvitations().add(album);
@@ -577,7 +513,7 @@ public class UserService {
    * resUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에서 albumID에 해당하는 album
    * 제거
    * 
-   * @param collaboUserID
+   * @param collaboUserUUID
    * @param album
    */
   public void removeAlbumInvitation(@NonNull String resUserID, String albumID) {
@@ -585,20 +521,20 @@ public class UserService {
     User user = userRepository.findById(resUserID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
 
-    user.getReceivedAlbumInvitations().removeIf(album -> album.getAlbumID().equals(albumID));
+    user.getReceivedAlbumInvitations().removeIf(album -> album.getAlbumUUID().equals(albumID));
 
     userRepository.save(user);
   }
 
   /**
-   * collaboUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * collaboUserUUID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
    * 
-   * @param collaboUserID
+   * @param collaboUserUUID
    * @param album
    */
-  public void addCollaboAlbum(@NonNull String collaboUserID, Album album) {
+  public void addCollaboAlbum(@NonNull String collaboUserUUID, Album album) {
 
-    User user = userRepository.findById(collaboUserID)
+    User user = userRepository.findById(collaboUserUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
 
     user.getCollaboAlbums().add(album);
