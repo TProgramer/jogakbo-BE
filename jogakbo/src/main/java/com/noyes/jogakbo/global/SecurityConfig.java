@@ -49,6 +49,10 @@ public class SecurityConfig {
                   () -> {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                   });
+        })
+        // 로그아웃 성공 핸들러
+        .logoutSuccessHandler((request, response, authentication) -> {
+          // 기본 핸들러의 redirect 요청을 막기위해 사용
         });
 
     http
