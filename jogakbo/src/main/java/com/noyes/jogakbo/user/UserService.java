@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.noyes.jogakbo.album.Album;
+import com.noyes.jogakbo.album.AlbumService;
+import com.noyes.jogakbo.album.DTO.AlbumInfo;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.user.DTO.Friend;
@@ -35,6 +37,7 @@ public class UserService {
   private final UserRepository userRepository;
   private final JwtService jwtService;
   private final AwsS3Service awsS3Service;
+  private final AlbumService albumService;
 
   public Optional<User> checkUser(HttpServletResponse response, String accessToken) {
 
@@ -123,28 +126,18 @@ public class UserService {
 
   public void deleteRefreshToken(HttpServletResponse response, String userUUID) {
 
-    Optional<User> targetUser = getUser(userUUID);
-
-    if (!targetUser.isPresent()) {
-
-      log.info("잘못된 요청값");
-      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-
-      return;
-    }
-
-    User user = targetUser.get();
+    User user = getUser(userUUID);
     user.updateRefreshToken(null);
     userRepository.save(user);
     log.info("리프레시 토큰 삭제 완료!");
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  public void addAlbum(Album newAlbum, @NonNull String userUUID) {
+  public void addAlbum(String albumName, @NonNull String userUUID) {
 
     User targetUser = userRepository.findById(userUUID).get();
-    List<Album> albums = targetUser.getAlbums();
-    albums.add(newAlbum);
+    List<String> albums = targetUser.getAlbums();
+    albums.add(albumName);
     userRepository.save(targetUser);
   }
 
@@ -157,9 +150,10 @@ public class UserService {
    * @param id
    * @return
    */
-  public Optional<User> getUser(@NonNull String userUUID) {
+  public User getUser(@NonNull String userUUID) {
 
-    return userRepository.findById(userUUID);
+    return userRepository.findById(userUUID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지않은 유저 ID 입니다."));
   }
 
   /**
@@ -173,8 +167,7 @@ public class UserService {
    */
   public UserInfo getUserInfo(@NonNull String userUUID) {
 
-    User user = userRepository.findById(userUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지않은 유저 ID 입니다."));
+    User user = getUser(userUUID);
 
     return UserInfo.builder()
         .userUUID(user.getUserUUID())
@@ -191,17 +184,36 @@ public class UserService {
    */
   public UserProfile getUserProfile(String userUUID) {
 
-    User user = getUser(userUUID).get();
+    User user = getUser(userUUID);
+
+    // 친구들 정보 불러오기
+    List<String> friendsUUIDs = user.getFriends();
+    List<Friend> friends = getFriends(friendsUUIDs);
+
+    // 친구 요청을 보낸 유저 정보 불러오기
+    List<String> friendRequestersUUIDs = user.getReceivedFriendRequests();
+    List<Friend> friendRequesters = getFriends(friendRequestersUUIDs);
+
+    // 소유하고 있는 앨범 정보 불러오기
+    List<String> albumsUUIDs = user.getAlbums();
+    List<AlbumInfo> albums = albumService.getAlbumInfo(albumsUUIDs);
+
+    // 공동 작업 중인 앨범 정보 불러오기
+    List<String> collaboAlbumsUUIDs = user.getCollaboAlbums();
+    List<AlbumInfo> collaboAlbums = albumService.getAlbumInfo(collaboAlbumsUUIDs);
+
+    // 초대받은 앨범 정보 불러오기
+    List<String> albumInvitersUUIDs = user.getReceivedAlbumInvitations();
+    List<AlbumInfo> albumInviters = albumService.getAlbumInfo(albumInvitersUUIDs);
 
     return UserProfile.builder()
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
-        .friends(user.getFriends())
-        .sentFriendRequest(user.getSentFriendRequests())
-        .receivedFriendRequest(user.getReceivedFriendRequests())
-        .albums(user.getAlbums())
-        .collaboAlbums(user.getCollaboAlbums())
-        .receivedAlbumInvitations(user.getReceivedAlbumInvitations())
+        .friends(friends)
+        .receivedFriendRequest(friendRequesters)
+        .albums(albums)
+        .collaboAlbums(collaboAlbums)
+        .receivedAlbumInvitations(albumInviters)
         .build();
   }
 
@@ -230,15 +242,9 @@ public class UserService {
     // 이미 친구인 유저나 이미 요청을 보낸 유저ID 불러오기
     User user = userRepository.findById(userUUID).get();
 
-    List<String> filterFriendUsername = user.getFriends()
-        .stream()
-        .map(Friend::getUserUUID)
-        .collect(Collectors.toList());
+    List<String> filterFriendUserUUID = user.getFriends();
 
-    List<String> filterWaitingUsername = user.getSentFriendRequests()
-        .stream()
-        .map(Friend::getUserUUID)
-        .collect(Collectors.toList());
+    List<String> filterWaitingUserUUID = user.getSentFriendRequests();
 
     // 필터링한 Friend 목록 추출하기
     List<FriendSearchResult> searchResult = new ArrayList<>();
@@ -247,9 +253,9 @@ public class UserService {
 
       FriendStatus friendStatus;
 
-      if (filterFriendUsername.contains(target.getUserUUID()))
+      if (filterFriendUserUUID.contains(target.getUserUUID()))
         friendStatus = FriendStatus.FRIEND;
-      else if (filterWaitingUsername.contains(target.getUserUUID()))
+      else if (filterWaitingUserUUID.contains(target.getUserUUID()))
         friendStatus = FriendStatus.WAITING;
       else
         friendStatus = FriendStatus.STRANGER;
@@ -277,43 +283,34 @@ public class UserService {
    * 
    * @param userUUID
    */
-  public Friend sendFriendRequest(@NonNull String reqUserID, @NonNull String resUserID) {
+  public Friend sendFriendRequest(@NonNull String reqUserUUID, @NonNull String resUserUUID) {
+
+    User requestUser = userRepository.findById(reqUserUUID).get();
 
     // 이미 요청을 보낸 대상일 경우 예외처리
-    User requestUser = userRepository.findById(reqUserID).get();
-    List<Friend> sentFriendRequest = requestUser.getSentFriendRequests();
-
-    if (isUserInFriendList(sentFriendRequest, resUserID) != null)
-      return null;
+    List<String> friendRequestees = requestUser.getSentFriendRequests();
+    if (isUserInFriendList(friendRequestees, resUserUUID))
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 친구 요청을 보냈습니다.");
 
     // 이미 친구인 경우도 예외처리
-    if (isUserInFriendList(requestUser.getFriends(), resUserID) != null)
-      return null;
+    List<String> friends = requestUser.getFriends();
+    if (isUserInFriendList(friends, resUserUUID))
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 친구인 유저입니다.");
 
-    // 친구 요청 리스트에 등록
-    User responseUser = userRepository.findById(resUserID).get();
-    List<Friend> receivedFriendRequest = responseUser.getReceivedFriendRequests();
+    // 서로의 보낸|받은 친구 요청 리스트에 등록
+    friendRequestees.add(resUserUUID);
+    userRepository.save(requestUser);
 
-    Friend responseFreind = Friend.builder()
-        .nickname(responseUser.getNickname())
-        .userUUID(responseUser.getUserUUID())
-        .profileImageURL(responseUser.getProfileImageUrl())
-        .build();
+    User responseUser = userRepository.findById(resUserUUID).get();
+    List<String> friendRequesters = responseUser.getReceivedFriendRequests();
+    friendRequesters.add(reqUserUUID);
+    userRepository.save(responseUser);
 
-    sentFriendRequest.add(responseFreind);
-
-    Friend requestFreind = Friend.builder()
+    return Friend.builder()
         .nickname(requestUser.getNickname())
         .userUUID(requestUser.getUserUUID())
         .profileImageURL(requestUser.getProfileImageUrl())
         .build();
-
-    receivedFriendRequest.add(requestFreind);
-
-    userRepository.save(requestUser);
-    userRepository.save(responseUser);
-
-    return requestFreind;
   }
 
   /**
@@ -322,58 +319,51 @@ public class UserService {
    * 
    * @param userUUID
    */
-  public String replyFriendRequest(@NonNull String reqUserID, @NonNull String resUserID, String reply) {
+  public String replyFriendRequest(@NonNull String reqUserUUID, @NonNull String resUserUUID, String reply) {
 
-    // 보낸 | 받은 요청 유효성 판별 변수 추가
+    // reqUserUUID에 해당하는 유저가 존재할 때
+    User requestUser = getUser(reqUserUUID);
+
+    // 보낸|받은 요청 유효성 판별 변수 초기화
     boolean isValidRequest = true;
 
     // 친구 요청을 보낸 유저인지 확인
-    User requestUser = userRepository.findById(reqUserID).get();
-    List<Friend> sentFriendRequest = requestUser.getSentFriendRequests();
-
-    Friend targetUser = isUserInFriendList(sentFriendRequest, resUserID);
-
-    if (targetUser == null)
+    List<String> friendRequestees = requestUser.getSentFriendRequests();
+    if (!isUserInFriendList(friendRequestees, resUserUUID))
       isValidRequest = false;
 
     // 친구 요청을 받은 유저인지도 확인
-    User responseUser = userRepository.findById(resUserID).get();
-    List<Friend> receivedFriendRequest = responseUser.getReceivedFriendRequests();
+    User responseUser = getUser(resUserUUID);
 
-    Friend callUser = isUserInFriendList(receivedFriendRequest, reqUserID);
-
-    if (callUser == null)
+    List<String> friendRequesters = responseUser.getReceivedFriendRequests();
+    if (!isUserInFriendList(friendRequesters, reqUserUUID))
       isValidRequest = false;
 
     // 서로의 요청, 승인 대기열에서 삭제
-    sentFriendRequest.remove(targetUser);
-    receivedFriendRequest.remove(callUser);
+    friendRequestees.remove(resUserUUID);
+    friendRequesters.remove(reqUserUUID);
 
     userRepository.save(requestUser);
     userRepository.save(responseUser);
 
     if (!isValidRequest)
-      return "더 이상 유효하지 않은 친구 요청입니다.";
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "더 이상 유효하지 않은 친구 요청입니다.");
 
     // 서로의 친구 목록에 추가
     if (reply.equals("accept")) {
 
-      requestUser.getFriends().add(targetUser);
-      responseUser.getFriends().add(callUser);
+      requestUser.getFriends().add(resUserUUID);
+      responseUser.getFriends().add(reqUserUUID);
     }
 
     // 서로 친구 추가 요청을 보냈을 경우 예외처리
-    List<Friend> doubleCheckSentList = responseUser.getSentFriendRequests();
-    Friend doubleCheckSentUser = isUserInFriendList(doubleCheckSentList, reqUserID);
+    List<String> doubleCheckFriendRequestees = responseUser.getSentFriendRequests();
+    if (isUserInFriendList(doubleCheckFriendRequestees, reqUserUUID))
+      doubleCheckFriendRequestees.remove(reqUserUUID);
 
-    if (doubleCheckSentUser != null)
-      doubleCheckSentList.remove(doubleCheckSentUser);
-
-    List<Friend> doubleCheckReceivedList = requestUser.getSentFriendRequests();
-    Friend doubleCheckReceivedUser = isUserInFriendList(doubleCheckReceivedList, resUserID);
-
-    if (doubleCheckReceivedUser != null)
-      doubleCheckReceivedList.remove(doubleCheckReceivedUser);
+    List<String> doubleCheckFriendRequesters = requestUser.getSentFriendRequests();
+    if (isUserInFriendList(doubleCheckFriendRequesters, resUserUUID))
+      doubleCheckFriendRequesters.remove(resUserUUID);
 
     // Entity 저장
     userRepository.save(requestUser);
@@ -383,49 +373,44 @@ public class UserService {
   }
 
   /**
-   * socialID에 해당하는 Friend를 List에서 찾기
+   * friendUUIDs에 userUUID가 있는지 TF를 반환
    * 
    * @param userUUID
    */
-  public Friend isUserInFriendList(List<Friend> friendList, String userUUID) {
+  public boolean isUserInFriendList(List<String> friendUUIDs, String userUUID) {
 
-    for (Friend friend : friendList) {
+    for (String friendUUID : friendUUIDs) {
 
-      if (friend.getUserUUID().equals(userUUID))
-        return friend;
+      if (friendUUID.equals(userUUID))
+        return true;
     }
-    return null;
+    return false;
   }
 
   /**
-   * socialID에 해당하는 User를 친구 목록에서 삭제하기
-   * JPA Repository의 findBy Method를 사용하여 특정 User에 접근하여 삭제
+   * userUUID에 해당하는 User를 친구 목록에서 삭제
    * 
    * @param userUUID
    */
-  public String removeFriend(@NonNull String targetUserID, @NonNull String userUUID) {
+  public String removeFriend(@NonNull String targetUserUUID, @NonNull String userUUID) {
 
     // 친구 목록에서 삭제 작업
-    User user = userRepository.findById(userUUID).get();
-    List<Friend> friends = user.getFriends();
+    User user = getUser(userUUID);
+    List<String> friends = user.getFriends();
 
-    Friend target = isUserInFriendList(friends, targetUserID);
-
-    if (target != null)
-      friends.remove(target);
+    if (isUserInFriendList(friends, targetUserUUID))
+      friends.remove(targetUserUUID);
     else
-      return "이미 친구가 아닌 유저입니다.";
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "친구가 아닌 유저입니다.");
 
     userRepository.save(user);
 
     // 상대방의 친구 목록에서도 삭제
-    User targetUser = userRepository.findById(targetUserID).get();
-    List<Friend> targetFriends = targetUser.getFriends();
+    User targetUser = getUser(targetUserUUID);
+    List<String> targetUserFriends = targetUser.getFriends();
 
-    Friend targetFriend = isUserInFriendList(targetFriends, userUUID);
-
-    if (targetFriend != null)
-      targetFriends.remove(targetFriend);
+    if (isUserInFriendList(targetUserFriends, userUUID))
+      targetUserFriends.remove(userUUID);
     else
       return "대상 유저의 친구 목록에 존재하지 않습니다.";
 
@@ -444,8 +429,7 @@ public class UserService {
    */
   public String updateProfile(String newNickname, MultipartFile profileImage, @NonNull String userUUID) {
 
-    User user = userRepository.findById(userUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 유저 ID 입니다."));
+    User user = getUser(userUUID);
 
     // 기존 nickname과 동일한지 확인 후 수정
     if (!user.getNickname().equals(newNickname))
@@ -472,35 +456,28 @@ public class UserService {
   }
 
   /**
-   * collaboUserUUID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에 album을 추가
+   * collaboUserUUID에 해당하는 유저 Entity의 albumInviters 필드에 albumUUID를 추가
    * 
    * @param collaboUserUUID
    * @param album
    */
-  public void addReceivedAlbumInvitations(@NonNull String collaboUserUUID, Album album) {
+  public void addAlbumInviters(@NonNull String collaboUserUUID, String albumUUID) {
 
-    User user = userRepository.findById(collaboUserUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
-
-    user.getReceivedAlbumInvitations().add(album);
-
+    User user = getUser(collaboUserUUID);
+    user.getReceivedAlbumInvitations().add(albumUUID);
     userRepository.save(user);
   }
 
   /**
-   * resUserID에 해당하는 유저 Entity의 receivedAlbumInvitations 필드에서 albumID에 해당하는 album
-   * 제거
+   * resUserID에 해당하는 유저 Entity의 albumInviters 필드에서 일치하는 albumUUID 제거
    * 
    * @param collaboUserUUID
    * @param album
    */
-  public void removeAlbumInvitation(@NonNull String resUserID, String albumID) {
+  public void removeAlbumInvitation(@NonNull String resUserUUID, String albumUUID) {
 
-    User user = userRepository.findById(resUserID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
-
-    user.getReceivedAlbumInvitations().removeIf(album -> album.getAlbumUUID().equals(albumID));
-
+    User user = getUser(resUserUUID);
+    user.getReceivedAlbumInvitations().remove(albumUUID);
     userRepository.save(user);
   }
 
@@ -510,13 +487,35 @@ public class UserService {
    * @param collaboUserUUID
    * @param album
    */
-  public void addCollaboAlbum(@NonNull String collaboUserUUID, Album album) {
+  public void addCollaboAlbum(@NonNull String collaboUserUUID, String albumUUID) {
 
-    User user = userRepository.findById(collaboUserUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 대상입니다."));
-
-    user.getCollaboAlbums().add(album);
-
+    User user = getUser(collaboUserUUID);
+    user.getCollaboAlbums().add(albumUUID);
     userRepository.save(user);
+  }
+
+  /**
+   * userUUID 배열에 해당하는 모든 유저 정보를 List<Friend>로 반환
+   * 
+   * @param userUUIDs
+   * @return
+   */
+  public List<Friend> getFriends(List<String> userUUIDs) {
+
+    List<Friend> friends = List.of();
+    for (String userUUID : userUUIDs) {
+
+      User user = getUser(userUUID);
+
+      Friend friend = Friend.builder()
+          .userUUID(user.getUserUUID())
+          .nickname(user.getNickname())
+          .profileImageURL(user.getProfileImageUrl())
+          .build();
+
+      friends.add(friend);
+    }
+
+    return friends;
   }
 }

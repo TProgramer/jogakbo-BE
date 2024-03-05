@@ -8,10 +8,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
-
-import com.noyes.jogakbo.album.Album;
-import com.noyes.jogakbo.user.DTO.Friend;
 
 import lombok.Builder;
 import lombok.Data;
@@ -29,16 +25,14 @@ public class User {
   private String profileImageOriginalName;
   private String profileImageUrl;
   private String refreshToken;
-  private List<Friend> friends;
-  private List<Friend> sentFriendRequests;
-  private List<Friend> receivedFriendRequests;
+  private List<String> friends;
+  private List<String> sentFriendRequests;
+  private List<String> receivedFriendRequests;
   // field for collaboration albums list
-  private List<Album> collaboAlbums;
+  private List<String> collaboAlbums;
   // field for recieved invitation from album owner
-  private List<Album> receivedAlbumInvitations;
-
-  @DocumentReference(lazy = true)
-  private List<Album> albums;
+  private List<String> receivedAlbumInvitations;
+  private List<String> albums;
 
   // check flag to use @CreatedDate, @LastModified annotation with custom PK
   @Version

@@ -18,6 +18,7 @@ import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
+import com.noyes.jogakbo.album.DTO.AlbumInfo;
 import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
 import com.noyes.jogakbo.global.redis.AlbumImagesInfo;
 import com.noyes.jogakbo.global.redis.RedisService;
@@ -41,11 +42,16 @@ public class AlbumService {
   private final AwsS3Service awsS3Service;
   private final RedisService redisService;
 
+  public Album getAlbum(String albumUUID) {
+
+    return albumRepository.findById(albumUUID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 앨범 ID 입니다."));
+  }
+
   public AlbumEntryMessage getEntryMessage(String userUUID, String albumUUID) throws JsonProcessingException {
 
     // 앨범 ID로 앨범 가져오기
-    Album album = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 앨범 ID 입니다."));
+    Album album = getAlbum(albumUUID);
 
     // 앨범 주인이거나 공동 작업자인지 확인
     String albumOwner = album.getAlbumOwner();
@@ -96,7 +102,7 @@ public class AlbumService {
 
     albumRepository.save(newAlbum);
 
-    userService.addAlbum(newAlbum, userUUID);
+    userService.addAlbum(albumName, userUUID);
 
     AlbumImagesInfo albumImagesInfo = AlbumImagesInfo.builder()
         .id(albumUUID)
@@ -220,8 +226,7 @@ public class AlbumService {
   public String updateProfile(String albumUUID, String newAlbumName, MultipartFile thumnailImage,
       @NonNull String userUUID) {
 
-    Album album = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 앨범 ID 입니다."));
+    Album album = getAlbum(albumUUID);
 
     // 요청자가 albumOwner 인지 검증
     if (!userUUID.equals(album.getAlbumOwner()))
@@ -296,8 +301,7 @@ public class AlbumService {
   public Boolean validAlbumEditor(String albumUUID, String userUUID) {
 
     // DB에서 albumID로 Album 객체 접근 후, albumOwner와 albumEditors 필드 추출
-    Album album = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범입니다."));
+    Album album = getAlbum(albumUUID);
 
     String albumOwnerID = album.getAlbumOwner();
     List<String> albumEditors = album.getAlbumEditors();
@@ -326,8 +330,7 @@ public class AlbumService {
   public Album sendAlbumInvitation(String albumUUID, String collaboUserUUID, String userUUID) {
 
     // 요청자가 album의 소유자인지 검증
-    Album album = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+    Album album = getAlbum(albumUUID);
 
     // 이미 요청을 보낸 대상일 경우 예외처리
     List<String> albumInvitees = album.getAlbumInvitees();
@@ -342,7 +345,7 @@ public class AlbumService {
 
     // 앨범 초대 리스트에 등록
     albumInvitees.add(collaboUserUUID);
-    userService.addReceivedAlbumInvitations(collaboUserUUID, album);
+    userService.addAlbumInviters(collaboUserUUID, albumUUID);
 
     albumRepository.save(album);
 
@@ -363,8 +366,7 @@ public class AlbumService {
     boolean isValidRequest = true;
 
     // 초대 요청을 보낸 앨범인지 확인
-    Album requestAlbum = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+    Album requestAlbum = getAlbum(albumUUID);
 
     List<String> albumInvitees = requestAlbum.getAlbumInvitees();
 
@@ -374,19 +376,16 @@ public class AlbumService {
       isValidRequest = false;
 
     // 초대 요청을 받은 유저인지도 확인
-    User responseUser = userService.getUser(resUserID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 유저 ID 입니다."));
+    User responseUser = userService.getUser(resUserID);
 
-    List<Album> receivedAlbumInvitations = responseUser.getReceivedAlbumInvitations();
+    List<String> albumInviters = responseUser.getReceivedAlbumInvitations();
 
-    Album callAlbum = isAlbumInList(receivedAlbumInvitations, albumUUID);
-
-    if (callAlbum == null)
+    if (!isAlbumInList(albumInviters, albumUUID))
       isValidRequest = false;
 
     // 서로의 요청, 승인 대기열에서 삭제
     albumInvitees.remove(targetUser);
-    userService.removeAlbumInvitation(resUserID, callAlbum.getAlbumUUID());
+    userService.removeAlbumInvitation(resUserID, albumUUID);
 
     albumRepository.save(requestAlbum);
 
@@ -399,7 +398,7 @@ public class AlbumService {
       requestAlbum.getAlbumEditors().add(targetUser);
       albumRepository.save(requestAlbum);
 
-      userService.addCollaboAlbum(resUserID, callAlbum);
+      userService.addCollaboAlbum(resUserID, albumUUID);
     }
 
     return "요청이 성공적으로 반영되었습니다.";
@@ -421,19 +420,19 @@ public class AlbumService {
   }
 
   /**
-   * List에 동일한 albumID를 가지는 album이 존재하는지 판별
+   * List에 동일한 albumID를 가지는 album이 존재하는지 TF 판별
    * 
    * @param
    * @return
    */
-  public Album isAlbumInList(List<Album> albumList, String albumUUID) {
+  public boolean isAlbumInList(List<String> albumList, String albumUUID) {
 
-    for (Album albumPiece : albumList) {
+    for (String albumPiece : albumList) {
 
-      if (albumPiece.getAlbumUUID().equals(albumUUID))
-        return albumPiece;
+      if (albumPiece.equals(albumUUID))
+        return true;
     }
-    return null;
+    return false;
   }
 
   /**
@@ -450,8 +449,7 @@ public class AlbumService {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
 
     // 앨범 주인 정보 추출
-    Album album = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+    Album album = getAlbum(albumUUID);
 
     String albumOwnerUUID = album.getAlbumOwner();
     UserInfo albumOwnerInfo = userService.getUserInfo(albumOwnerUUID);
@@ -497,8 +495,7 @@ public class AlbumService {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
 
     // 앨범 정보 추출
-    Album album = albumRepository.findById(albumUUID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 앨범 ID 입니다."));
+    Album album = getAlbum(albumUUID);
 
     return AlbumDetailInfo.builder()
         .albumName(album.getAlbumName())
@@ -506,5 +503,35 @@ public class AlbumService {
         .createdDate(album.getCreatedDate())
         .isPublic(false)
         .build();
+  }
+
+  /**
+   * 이미 인증된 유저가 요청한 albumUUIDs에 해당하는 List<AlbumInfo> 반환
+   * 
+   * @param albumUUID
+   * @return
+   */
+  public List<AlbumInfo> getAlbumInfo(List<String> albumUUIDs) {
+
+    // Authenication 객체의 userUUID로 이미 인증된 유저이므로 검증 생략
+
+    List<AlbumInfo> albumInfos = List.of();
+
+    for (String albumUUID : albumUUIDs) {
+
+      Album album = getAlbum(albumUUID);
+
+      AlbumInfo albumInfo = AlbumInfo.builder()
+          .albumUUID(album.getAlbumUUID())
+          .albumName(album.getAlbumName())
+          .thumbnailImageURL(album.getThumbnailImage())
+          .createdDate(album.getCreatedDate())
+          .lastModifiedDate(album.getLastModifiedDate())
+          .build();
+
+      albumInfos.add(albumInfo);
+    }
+
+    return albumInfos;
   }
 }

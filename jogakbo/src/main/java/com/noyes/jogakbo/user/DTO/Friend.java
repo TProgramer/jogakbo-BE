@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class Friend {
 
-  private String nickname;
   private String userUUID;
+  private String nickname;
   private String profileImageURL;
 }

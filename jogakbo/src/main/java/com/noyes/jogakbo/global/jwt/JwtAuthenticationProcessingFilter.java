@@ -120,13 +120,13 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
   public void checkAccessTokenAndAuthentication(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
 
-    // log.info("checkAccessTokenAndAuthentication() 호출");
-
     jwtService.extractAccessToken(request)
         .filter(jwtService::isTokenValid)
         .ifPresent(accessToken -> jwtService.extractUserUUID(accessToken)
-            .ifPresent(socialID -> userService.getUser(socialID)
-                .ifPresent(this::saveAuthentication)));
+            .ifPresent(socialID -> {
+              User user = userService.getUser(socialID);
+              saveAuthentication(user);
+            }));
 
     filterChain.doFilter(request, response);
   }
