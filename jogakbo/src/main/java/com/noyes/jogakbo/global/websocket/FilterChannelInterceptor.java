@@ -34,6 +34,7 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
   private final JwtService jwtService;
   private final AlbumService albumService;
 
+  @SuppressWarnings("null")
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel channel) {
 

@@ -3,7 +3,6 @@ package com.noyes.jogakbo.user;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -17,16 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.noyes.jogakbo.album.Album;
-import com.noyes.jogakbo.album.AlbumService;
-import com.noyes.jogakbo.album.DTO.AlbumInfo;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
 import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.FriendSearchResult;
 import com.noyes.jogakbo.user.DTO.FriendStatus;
 import com.noyes.jogakbo.user.DTO.UserInfo;
-import com.noyes.jogakbo.user.DTO.UserProfile;
 
 @Slf4j
 @Service
@@ -38,6 +33,7 @@ public class UserService {
   private final JwtService jwtService;
   private final AwsS3Service awsS3Service;
 
+  @SuppressWarnings("null")
   public Optional<User> checkUser(HttpServletResponse response, String accessToken) {
 
     String userUUID = jwtService.extractUserUUID(accessToken).get();

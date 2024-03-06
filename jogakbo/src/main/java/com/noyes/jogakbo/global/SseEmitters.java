@@ -27,6 +27,7 @@ public class SseEmitters {
     return emitter;
   }
 
+  @SuppressWarnings("null")
   public String sendFriendRequestAlarm(String userUUID, Friend requestUser) {
 
     try {
@@ -55,6 +56,7 @@ public class SseEmitters {
    * @param requestAlbum
    * @return Result info in String
    */
+  @SuppressWarnings("null")
   public String sendAlbumInvitation(String collaboUserUUID, Album requestAlbum) {
 
     try {

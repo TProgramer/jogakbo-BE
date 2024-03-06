@@ -42,6 +42,7 @@ public class AlbumService {
   private final AwsS3Service awsS3Service;
   private final RedisService redisService;
 
+  @SuppressWarnings("null")
   public Album getAlbum(String albumUUID) {
 
     return albumRepository.findById(albumUUID)
@@ -59,23 +60,6 @@ public class AlbumService {
     if (!albumOwner.equals(userUUID) && !albumEditors.contains(userUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범을 조회할 권한이 없습니다.");
 
-    // 앨범 주인과 공동 작업자들의 정보 추출
-    UserInfo albumOwnerInfo = userService.getUserInfo(albumOwner);
-    List<UserInfo> albumEditorsInfo = new ArrayList<>();
-
-    for (String albumEditor : albumEditors) {
-
-      albumEditorsInfo.add(userService.getUserInfo(albumEditor));
-    }
-
-    // 앨범에 초대된 유저 정보 추출
-    List<String> albumInvitees = album.getAlbumInvitees();
-    List<UserInfo> albumInviteesInfo = new ArrayList<>();
-    for (String albumInvitee : albumInvitees) {
-
-      albumInviteesInfo.add(userService.getUserInfo(albumInvitee));
-    }
-
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
@@ -85,6 +69,7 @@ public class AlbumService {
         .build();
   }
 
+  @SuppressWarnings("null")
   public String createAlbum(String albumName, String userUUID) throws JsonProcessingException {
 
     String albumUUID = UUID.randomUUID().toString();
@@ -217,6 +202,7 @@ public class AlbumService {
    * @param
    * @return 실행 결과
    */
+  @SuppressWarnings("null")
   public String updateProfile(String albumUUID, String newAlbumName, MultipartFile thumnailImage,
       @NonNull String userUUID) {
 
@@ -250,10 +236,11 @@ public class AlbumService {
     return "프로필을 성공적으로 변경했습니다.";
   }
 
+  @SuppressWarnings("null")
   public String removeAlbum(String albumUUID, String userUUID) throws IOException {
 
     // albumID로 앨범 조회
-    Album album = albumRepository.findById(albumUUID).get();
+    Album album = getAlbum(albumUUID);
 
     // 앨범 소유자의 요청인지 검증
     if (!album.getAlbumOwner().equals(userUUID))

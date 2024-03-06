@@ -64,6 +64,7 @@ public class AlbumController {
     return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumUUID));
   }
 
+  @SuppressWarnings("null")
   @Operation(description = "앨범 페이지 추가 API입니다.")
   @PostMapping("{albumUUID}/page")
   public ResponseEntity<String> createPage(@PathVariable String albumUUID, Principal principal)
@@ -74,6 +75,7 @@ public class AlbumController {
     return ResponseEntity.ok("페이지를 성공적으로 추가했습니다.");
   }
 
+  @SuppressWarnings("null")
   @Operation(description = "앨범 내부 사진 등록 API입니다.")
   @PostMapping("/{albumUUID}/image")
   public ResponseEntity<String> uploadImages(@PathVariable String albumUUID,
@@ -86,6 +88,7 @@ public class AlbumController {
     return ResponseEntity.ok("사진을 성공적으로 등록했습니다.");
   }
 
+  @SuppressWarnings("null")
   @Operation(description = "앨범 내부 사진 삭제 API입니다.")
   @DeleteMapping("/{albumUUID}/image/{albumImageUUID}")
   public ResponseEntity<String> unloadImage(@PathVariable String albumUUID,

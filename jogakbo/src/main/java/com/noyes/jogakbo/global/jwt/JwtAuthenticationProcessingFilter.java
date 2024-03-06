@@ -49,6 +49,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
   private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
+  @SuppressWarnings("null")
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {

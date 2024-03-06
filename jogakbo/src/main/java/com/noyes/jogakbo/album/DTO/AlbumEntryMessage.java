@@ -1,6 +1,5 @@
 package com.noyes.jogakbo.album.DTO;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.Builder;

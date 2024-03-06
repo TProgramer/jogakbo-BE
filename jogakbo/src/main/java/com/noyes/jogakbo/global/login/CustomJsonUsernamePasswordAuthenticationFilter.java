@@ -71,6 +71,7 @@ public class CustomJsonUsernamePasswordAuthenticationFilter extends AbstractAuth
           "Authentication Content-Type not supported: " + request.getContentType());
     }
 
+    @SuppressWarnings("null")
     String messageBody = StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8);
 
     @SuppressWarnings("unchecked")
