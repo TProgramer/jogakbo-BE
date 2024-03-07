@@ -68,10 +68,9 @@ public class SecurityConfig {
         .authorizeRequests()
         // 아이콘, css, js 관련
         // 기본 페이지, css, image, js 하위 폴더에 있는 자료들은 모두 접근 가능, graphiql에도 추가로 접근 가능
-        .antMatchers("/css/**", "/images/**", "/js/**", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**", "/logout",
-            "/album-ws",
-            "/**",
-            "/ws")
+        .antMatchers("/css/**", "/images/**", "/js/**", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**", "/logout"
+        // ,"/album-ws"
+        )
         .permitAll()
         .anyRequest().authenticated(); // 위의 경로 이외에는 모두 인증된 사용자만 접근 가능
 
