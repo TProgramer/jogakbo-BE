@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.global.SseEmitters;
-import com.noyes.jogakbo.user.DTO.FriendSearchResult;
+import com.noyes.jogakbo.user.DTO.UserSearchResult;
 import com.noyes.jogakbo.user.DTO.UserInfo;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
@@ -51,12 +51,12 @@ public class UserController {
 
   @Operation(description = "닉네임으로 친구 찾기 API입니다.")
   @GetMapping("/search")
-  public ResponseEntity<List<FriendSearchResult>> searchFriend(@RequestParam String nickname, Principal principal) {
+  public ResponseEntity<List<UserSearchResult>> searchFriend(@RequestParam String nickname, Principal principal) {
 
     if (nickname.equals(""))
       return ResponseEntity.ok(List.of());
 
-    List<FriendSearchResult> searchResult = userService.searchFriend(nickname, principal.getName());
+    List<UserSearchResult> searchResult = userService.searchFriend(nickname, principal.getName());
 
     return ResponseEntity.ok(searchResult);
   }

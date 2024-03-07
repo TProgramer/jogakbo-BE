@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class FriendSearchResult {
+public class UserSearchResult {
 
   private UserInfo friend;
   private FriendStatus friendStatus;

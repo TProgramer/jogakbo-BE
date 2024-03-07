@@ -18,7 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
-import com.noyes.jogakbo.user.DTO.FriendSearchResult;
+import com.noyes.jogakbo.user.DTO.UserSearchResult;
 import com.noyes.jogakbo.user.DTO.FriendStatus;
 import com.noyes.jogakbo.user.DTO.UserInfo;
 
@@ -178,7 +178,7 @@ public class UserService {
    * 
    * @param id
    */
-  public List<FriendSearchResult> searchFriend(String nickname, @NonNull String userUUID) {
+  public List<UserSearchResult> searchFriend(String nickname, @NonNull String userUUID) {
 
     // nickname을 기준으로 본인을 제외한 유저 불러오기
     List<User> targetUsers = userRepository.findAllByNicknameContainsAndUserUUIDNot(nickname, userUUID).get();
@@ -191,7 +191,7 @@ public class UserService {
     List<String> filterWaitingUserUUID = user.getFriendRequestees();
 
     // 필터링한 Friend 목록 추출하기
-    List<FriendSearchResult> searchResult = new ArrayList<>();
+    List<UserSearchResult> searchResult = new ArrayList<>();
 
     for (User target : targetUsers) {
 
@@ -210,7 +210,7 @@ public class UserService {
           .profileImageURL(target.getProfileImageUrl())
           .build();
 
-      FriendSearchResult friendSearchResult = FriendSearchResult.builder()
+      UserSearchResult friendSearchResult = UserSearchResult.builder()
           .friend(friend)
           .friendStatus(friendStatus)
           .build();
