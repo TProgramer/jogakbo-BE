@@ -51,6 +51,7 @@ public class MyPageService {
     List<AlbumInfo> albumInviters = albumService.getAlbumInfo(albumInvitersUUIDs);
 
     return UserProfile.builder()
+        .userUUID(userUUID)
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
         .friends(friends)

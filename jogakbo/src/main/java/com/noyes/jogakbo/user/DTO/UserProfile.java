@@ -11,6 +11,7 @@ import lombok.Data;
 @Builder
 public class UserProfile {
 
+  private String userUUID;
   private String nickname;
   private String profileImageUrl;
   private List<Friend> friends;
