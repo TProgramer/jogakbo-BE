@@ -224,7 +224,7 @@ public class AlbumService {
       // S3에 업로드 시도 후, 업로드 된 S3 파일명 받아오기
       String uploadFileName = awsS3Service.uploadFile(thumnailImage, albumUUID);
 
-      album.setThumbnailImage(uploadFileName);
+      album.setThumbnailImageURL(uploadFileName);
       album.setThumbnailOriginalName(thumnailImage.getOriginalFilename());
 
       // 기존 thumbnailImage 삭제
@@ -480,7 +480,7 @@ public class AlbumService {
 
     return AlbumDetailInfo.builder()
         .albumName(album.getAlbumName())
-        .thumbnailImage(album.getThumbnailImage())
+        .thumbnailImage(album.getThumbnailImageURL())
         .createdDate(album.getCreatedDate())
         .isPublic(false)
         .build();
@@ -505,7 +505,7 @@ public class AlbumService {
       AlbumInfo albumInfo = AlbumInfo.builder()
           .albumUUID(album.getAlbumUUID())
           .albumName(album.getAlbumName())
-          .thumbnailImageURL(album.getThumbnailImage())
+          .thumbnailImageURL(album.getThumbnailImageURL())
           .createdDate(album.getCreatedDate())
           .lastModifiedDate(album.getLastModifiedDate())
           .build();

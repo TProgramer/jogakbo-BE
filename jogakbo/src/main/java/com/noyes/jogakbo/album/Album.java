@@ -27,7 +27,7 @@ public class Album {
   // field with userUUID in String value
   private String albumOwner;
   // field presents image path in AWS S3
-  private String thumbnailImage;
+  private String thumbnailImageURL;
   // field to recognize image update
   @Builder.Default
   private String thumbnailOriginalName = "";
