@@ -279,7 +279,7 @@ public class AlbumService {
    * @param userUUID
    * @return
    */
-  public Boolean validAlbumEditor(String albumUUID, String userUUID) {
+  public Boolean isValidAlbumEditor(String albumUUID, String userUUID) {
 
     // DB에서 albumID로 Album 객체 접근 후, albumOwner와 albumEditors 필드 추출
     Album album = getAlbum(albumUUID);
@@ -426,7 +426,7 @@ public class AlbumService {
   public AlbumMemberInfo getAlbumMemberInfo(String albumUUID, String userUUID) {
 
     // 유저가 album editor 인지 검증
-    if (!validAlbumEditor(albumUUID, userUUID))
+    if (!isValidAlbumEditor(albumUUID, userUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
 
     // 앨범 주인 정보 추출
@@ -472,7 +472,7 @@ public class AlbumService {
   public AlbumDetailInfo getAlbumDetailInfo(String albumUUID, String userUUID) {
 
     // 유저가 album editor 인지 검증
-    if (!validAlbumEditor(albumUUID, userUUID))
+    if (!isValidAlbumEditor(albumUUID, userUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
 
     // 앨범 정보 추출
