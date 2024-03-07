@@ -15,8 +15,8 @@ public class UserProfile {
   private String nickname;
   private String profileImageURL;
   private List<Friend> friends;
-  private List<Friend> receivedFriendRequest;
+  private List<Friend> friendRequesters;
   private List<AlbumInfo> albums;
   private List<AlbumInfo> collaboAlbums;
-  private List<AlbumInfo> receivedAlbumInvitations;
+  private List<AlbumInfo> albumInviters;
 }

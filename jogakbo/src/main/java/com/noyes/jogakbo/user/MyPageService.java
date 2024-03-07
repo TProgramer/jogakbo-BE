@@ -55,10 +55,10 @@ public class MyPageService {
         .nickname(user.getNickname())
         .profileImageURL(user.getProfileImageUrl())
         .friends(friends)
-        .receivedFriendRequest(friendRequesters)
+        .friendRequesters(friendRequesters)
         .albums(albums)
         .collaboAlbums(collaboAlbums)
-        .receivedAlbumInvitations(albumInviters)
+        .albumInviters(albumInviters)
         .build();
   }
 }
