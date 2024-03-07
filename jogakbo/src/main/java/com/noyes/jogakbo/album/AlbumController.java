@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
+import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
@@ -56,8 +57,16 @@ public class AlbumController {
     return ResponseEntity.ok(newAlbumID);
   }
 
-  @Operation(description = "앨범 정보 조회 API입니다.")
+  @Operation(description = "입장하려는 앨범 정보 제공 API입니다.")
   @GetMapping("/{albumUUID}")
+  public ResponseEntity<AlbumEntryInfo> getAlbumEntryInfo(@PathVariable String albumUUID, Principal principal)
+      throws JsonProcessingException {
+
+    return ResponseEntity.ok(albumService.getAlbumEntryInfo(principal.getName(), albumUUID));
+  }
+
+  @Operation(description = "앨범 입장 후, 앨범 상태 초기화 API입니다.")
+  @GetMapping("/{albumUUID}/init")
   public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
       throws JsonProcessingException {
 

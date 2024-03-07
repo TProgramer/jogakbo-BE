@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
+import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
@@ -514,5 +515,32 @@ public class AlbumService {
     }
 
     return albumInfos;
+  }
+
+  public AlbumEntryInfo getAlbumEntryInfo(String userUUID, String albumUUID) throws JsonProcessingException {
+
+    // 유저가 album editor 인지 검증
+    if (!isValidAlbumEditor(albumUUID, userUUID))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
+
+    // 앨범 정보 추출
+    Album album = getAlbum(albumUUID);
+    int memberCount = album.getAlbumEditors().size() + 1;
+    int imageCount = 0;
+
+    AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+    List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
+    for (List<AlbumImageInfo> imagesInfoByPage : imagesInfo) {
+
+      imageCount += imagesInfoByPage.size();
+    }
+
+    return AlbumEntryInfo.builder()
+        .albumUUID(album.getAlbumUUID())
+        .albumName(album.getAlbumName())
+        .thumbnailImageURL(album.getThumbnailImageURL())
+        .memberCount(memberCount)
+        .imageCount(imageCount)
+        .build();
   }
 }
