@@ -53,7 +53,7 @@ public class MyPageService {
     return UserProfile.builder()
         .userUUID(userUUID)
         .nickname(user.getNickname())
-        .profileImageUrl(user.getProfileImageUrl())
+        .profileImageURL(user.getProfileImageUrl())
         .friends(friends)
         .receivedFriendRequest(friendRequesters)
         .albums(albums)

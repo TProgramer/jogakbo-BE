@@ -13,7 +13,7 @@ public class UserProfile {
 
   private String userUUID;
   private String nickname;
-  private String profileImageUrl;
+  private String profileImageURL;
   private List<Friend> friends;
   private List<Friend> receivedFriendRequest;
   private List<AlbumInfo> albums;
