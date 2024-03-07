@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class AlbumEntryMessage {
+public class AlbumInitInfo {
 
   private String albumName;
   private List<List<AlbumImageInfo>> imagesInfo;

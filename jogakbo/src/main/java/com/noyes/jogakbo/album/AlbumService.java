@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
-import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
+import com.noyes.jogakbo.album.DTO.AlbumInitInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.album.DTO.AlbumInfo;
@@ -50,7 +50,7 @@ public class AlbumService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 앨범 ID 입니다."));
   }
 
-  public AlbumEntryMessage getEntryMessage(String userUUID, String albumUUID) throws JsonProcessingException {
+  public AlbumInitInfo getEntryMessage(String userUUID, String albumUUID) throws JsonProcessingException {
 
     // 앨범 ID로 앨범 가져오기
     Album album = getAlbum(albumUUID);
@@ -64,7 +64,7 @@ public class AlbumService {
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
 
-    return AlbumEntryMessage.builder()
+    return AlbumInitInfo.builder()
         .albumName(album.getAlbumName())
         .imagesInfo(imagesInfo)
         .build();

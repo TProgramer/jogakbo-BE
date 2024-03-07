@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
-import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
+import com.noyes.jogakbo.album.DTO.AlbumInitInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
 import com.noyes.jogakbo.global.SseEmitters;
@@ -67,7 +67,7 @@ public class AlbumController {
 
   @Operation(description = "앨범 입장 후, 앨범 상태 초기화 API입니다.")
   @GetMapping("/{albumUUID}/init")
-  public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
+  public ResponseEntity<AlbumInitInfo> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
       throws JsonProcessingException {
 
     return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumUUID));
