@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.album.Album;
-import com.noyes.jogakbo.user.DTO.Friend;
+import com.noyes.jogakbo.user.DTO.UserInfo;
 
 @Component
 public class SseEmitters {
@@ -28,7 +28,7 @@ public class SseEmitters {
   }
 
   @SuppressWarnings("null")
-  public String sendFriendRequestAlarm(String userUUID, Friend requestUser) {
+  public String sendFriendRequestAlarm(String userUUID, UserInfo requestUser) {
 
     try {
 

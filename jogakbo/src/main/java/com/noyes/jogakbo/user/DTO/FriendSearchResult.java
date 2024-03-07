@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class FriendSearchResult {
 
-  private Friend friend;
+  private UserInfo friend;
   private FriendStatus friendStatus;
 }

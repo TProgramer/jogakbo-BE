@@ -18,7 +18,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.global.s3.AwsS3Service;
-import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.FriendSearchResult;
 import com.noyes.jogakbo.user.DTO.FriendStatus;
 import com.noyes.jogakbo.user.DTO.UserInfo;
@@ -205,7 +204,7 @@ public class UserService {
       else
         friendStatus = FriendStatus.STRANGER;
 
-      Friend friend = Friend.builder()
+      UserInfo friend = UserInfo.builder()
           .nickname(target.getNickname())
           .userUUID(target.getUserUUID())
           .profileImageURL(target.getProfileImageUrl())
@@ -228,7 +227,7 @@ public class UserService {
    * 
    * @param userUUID
    */
-  public Friend sendFriendRequest(@NonNull String reqUserUUID, @NonNull String resUserUUID) {
+  public UserInfo sendFriendRequest(@NonNull String reqUserUUID, @NonNull String resUserUUID) {
 
     User requestUser = userRepository.findById(reqUserUUID).get();
 
@@ -251,7 +250,7 @@ public class UserService {
     friendRequesters.add(reqUserUUID);
     userRepository.save(responseUser);
 
-    return Friend.builder()
+    return UserInfo.builder()
         .nickname(requestUser.getNickname())
         .userUUID(requestUser.getUserUUID())
         .profileImageURL(requestUser.getProfileImageUrl())
@@ -445,14 +444,14 @@ public class UserService {
    * @param userUUIDs
    * @return
    */
-  public List<Friend> getFriends(List<String> userUUIDs) {
+  public List<UserInfo> getUserInfos(List<String> userUUIDs) {
 
-    List<Friend> friends = List.of();
+    List<UserInfo> friends = List.of();
     for (String userUUID : userUUIDs) {
 
       User user = getUser(userUUID);
 
-      Friend friend = Friend.builder()
+      UserInfo friend = UserInfo.builder()
           .userUUID(user.getUserUUID())
           .nickname(user.getNickname())
           .profileImageURL(user.getProfileImageUrl())

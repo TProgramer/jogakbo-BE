@@ -19,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.global.SseEmitters;
-import com.noyes.jogakbo.user.DTO.Friend;
 import com.noyes.jogakbo.user.DTO.FriendSearchResult;
+import com.noyes.jogakbo.user.DTO.UserInfo;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,7 +65,7 @@ public class UserController {
   @PostMapping("/friend-request/{userUUID}")
   public ResponseEntity<String> sendFriendRequest(@PathVariable String userUUID, Principal principal) {
 
-    Friend requestUser = userService.sendFriendRequest(principal.getName(), userUUID);
+    UserInfo requestUser = userService.sendFriendRequest(principal.getName(), userUUID);
 
     if (requestUser == null)
       return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");

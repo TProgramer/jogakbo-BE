@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.noyes.jogakbo.album.AlbumService;
 import com.noyes.jogakbo.album.DTO.AlbumInfo;
-import com.noyes.jogakbo.user.DTO.Friend;
+import com.noyes.jogakbo.user.DTO.UserInfo;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 import lombok.RequiredArgsConstructor;
@@ -32,11 +32,11 @@ public class MyPageService {
 
     // 친구들 정보 불러오기
     List<String> friendsUUIDs = user.getFriends();
-    List<Friend> friends = userService.getFriends(friendsUUIDs);
+    List<UserInfo> friends = userService.getUserInfos(friendsUUIDs);
 
     // 친구 요청을 보낸 유저 정보 불러오기
     List<String> friendRequestersUUIDs = user.getFriendRequesters();
-    List<Friend> friendRequesters = userService.getFriends(friendRequestersUUIDs);
+    List<UserInfo> friendRequesters = userService.getUserInfos(friendRequestersUUIDs);
 
     // 소유하고 있는 앨범 정보 불러오기
     List<String> albumsUUIDs = user.getAlbums();
