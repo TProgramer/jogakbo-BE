@@ -481,7 +481,7 @@ public class AlbumService {
 
     return AlbumDetailInfo.builder()
         .albumName(album.getAlbumName())
-        .thumbnailImage(album.getThumbnailImageURL())
+        .thumbnailImageURL(album.getThumbnailImageURL())
         .createdDate(album.getCreatedDate())
         .isPublic(false)
         .build();

@@ -10,7 +10,7 @@ import lombok.Data;
 public class AlbumDetailInfo {
 
   private String albumName;
-  private String thumbnailImage;
+  private String thumbnailImageURL;
   private LocalDateTime createdDate;
   private boolean isPublic;
 }
