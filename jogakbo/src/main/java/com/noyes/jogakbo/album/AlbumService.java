@@ -438,7 +438,7 @@ public class AlbumService {
 
     // 앨범 공동 작업자 정보 추출
     List<String> albumEditorsUUIDs = album.getAlbumEditors();
-    List<UserInfo> albumEditorsInfos = List.of();
+    List<UserInfo> albumEditorsInfos = new ArrayList<>();
 
     for (String albumEditorUUID : albumEditorsUUIDs) {
 
@@ -448,7 +448,7 @@ public class AlbumService {
 
     // 앨범 초대 대상자 정보 추출
     List<String> albumInviteesUUIDs = album.getAlbumInvitees();
-    List<UserInfo> albumInviteesInfos = List.of();
+    List<UserInfo> albumInviteesInfos = new ArrayList<>();
 
     for (String albumInviteeUUID : albumInviteesUUIDs) {
 
@@ -497,7 +497,7 @@ public class AlbumService {
 
     // Authenication 객체의 userUUID로 이미 인증된 유저이므로 검증 생략
 
-    List<AlbumInfo> albumInfos = List.of();
+    List<AlbumInfo> albumInfos = new ArrayList<>();
 
     for (String albumUUID : albumUUIDs) {
 

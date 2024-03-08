@@ -446,7 +446,7 @@ public class UserService {
    */
   public List<UserInfo> getUserInfos(List<String> userUUIDs) {
 
-    List<UserInfo> friends = List.of();
+    List<UserInfo> friends = new ArrayList<>();
     for (String userUUID : userUUIDs) {
 
       User user = getUser(userUUID);
