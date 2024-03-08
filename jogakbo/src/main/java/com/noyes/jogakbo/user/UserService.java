@@ -121,10 +121,17 @@ public class UserService {
 
   public void addAlbum(String albumUUID, @NonNull String userUUID) {
 
-    User targetUser = userRepository.findById(userUUID).get();
-    List<String> albums = targetUser.getAlbums();
+    User user = getUser(userUUID);
+    List<String> albums = user.getAlbums();
     albums.add(albumUUID);
-    userRepository.save(targetUser);
+    userRepository.save(user);
+  }
+
+  public void removeAlbum(String albumUUID, @NonNull String userUUID) {
+
+    User user = getUser(userUUID);
+    user.getAlbums().remove(albumUUID);
+    userRepository.save(user);
   }
 
   /**

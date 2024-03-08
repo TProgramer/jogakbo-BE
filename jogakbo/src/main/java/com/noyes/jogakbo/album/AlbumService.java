@@ -250,6 +250,9 @@ public class AlbumService {
     // 앨범에 조회를 막아 추가 입장을 막기 위해 mongoDB에서 Album Entity 삭제
     albumRepository.deleteById(albumUUID);
 
+    // User Entity의 albums 필드에서도 해당 albumUUID 삭제
+    userService.removeAlbum(albumUUID, userUUID);
+
     // 모두를 앨범에서 강제 추방함을 알리고 소켓 연결 종료
     WebSocketSessionHolder.closeSessionByDestination(albumUUID);
 
