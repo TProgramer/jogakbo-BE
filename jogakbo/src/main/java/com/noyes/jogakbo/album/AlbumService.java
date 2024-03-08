@@ -539,6 +539,7 @@ public class AlbumService {
         .albumUUID(album.getAlbumUUID())
         .albumName(album.getAlbumName())
         .thumbnailImageURL(album.getThumbnailImageURL())
+        .createdDate(album.getCreatedDate())
         .memberCount(memberCount)
         .imageCount(imageCount)
         .build();
