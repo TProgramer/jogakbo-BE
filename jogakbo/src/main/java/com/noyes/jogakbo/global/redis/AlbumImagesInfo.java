@@ -21,5 +21,5 @@ public class AlbumImagesInfo {
   @Id
   private String id;
   @Builder.Default
-  private List<List<AlbumImageInfo>> imagesInfo = new ArrayList<>(List.of());
+  private List<List<AlbumImageInfo>> imagesInfo = List.of(new ArrayList<>());
 }
