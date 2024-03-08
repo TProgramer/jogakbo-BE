@@ -83,7 +83,7 @@ public class AlbumService {
 
     albumRepository.save(newAlbum);
 
-    userService.addAlbum(albumName, userUUID);
+    userService.addAlbum(albumUUID, userUUID);
 
     AlbumImagesInfo albumImagesInfo = AlbumImagesInfo.builder()
         .id(albumUUID)

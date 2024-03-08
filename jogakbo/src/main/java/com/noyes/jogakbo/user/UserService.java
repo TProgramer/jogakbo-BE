@@ -119,11 +119,11 @@ public class UserService {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  public void addAlbum(String albumName, @NonNull String userUUID) {
+  public void addAlbum(String albumUUID, @NonNull String userUUID) {
 
     User targetUser = userRepository.findById(userUUID).get();
     List<String> albums = targetUser.getAlbums();
-    albums.add(albumName);
+    albums.add(albumUUID);
     userRepository.save(targetUser);
   }
 
