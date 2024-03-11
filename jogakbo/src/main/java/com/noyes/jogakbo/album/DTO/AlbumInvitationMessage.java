@@ -9,5 +9,5 @@ public class AlbumInvitationMessage {
 
   private String albumUUId;
   private String albumName;
-  private String albumOwner;
+  private String albumOwnerName;
 }

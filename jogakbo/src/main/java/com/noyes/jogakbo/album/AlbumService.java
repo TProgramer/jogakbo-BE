@@ -323,7 +323,8 @@ public class AlbumService {
 
     // 요청자가 album의 소유자인지 검증
     Album album = getAlbum(albumUUID);
-    if (!userUUID.equals(album.getAlbumOwner()))
+    String albumOwnerUUID = album.getAlbumOwner();
+    if (!userUUID.equals(albumOwnerUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
 
     // 이미 요청을 보낸 대상일 경우 예외처리
@@ -343,10 +344,12 @@ public class AlbumService {
 
     albumRepository.save(album);
 
+    String albumOwnerName = userService.getUser(albumOwnerUUID).getNickname();
+
     return AlbumInvitationMessage.builder()
         .albumUUId(album.getAlbumUUID())
         .albumName(album.getAlbumName())
-        .albumOwner(album.getAlbumOwner())
+        .albumOwnerName(albumOwnerName)
         .build();
   }
 
