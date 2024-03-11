@@ -26,6 +26,7 @@ import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
 import com.noyes.jogakbo.album.DTO.AlbumInitInfo;
+import com.noyes.jogakbo.album.DTO.AlbumInvitationMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
 import com.noyes.jogakbo.global.SseEmitters;
@@ -145,12 +146,13 @@ public class AlbumController {
       @PathVariable String collaboUserUUID,
       Principal principal) {
 
-    Album album = albumService.sendAlbumInvitation(albumUUID, collaboUserUUID, principal.getName());
+    AlbumInvitationMessage albumInvitationMessage = albumService.sendAlbumInvitation(albumUUID, collaboUserUUID,
+        principal.getName());
 
-    if (album == null)
-      return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
+    if (albumInvitationMessage == null)
+      return ResponseEntity.ok("이미 앨범에 초대했거나 요청을 보낸 상대입니다.");
 
-    String result = sseEmitters.sendAlbumInvitation(collaboUserUUID, album);
+    String result = sseEmitters.sendAlbumInvitation(collaboUserUUID, albumInvitationMessage);
 
     return ResponseEntity.ok(result);
   }

@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.noyes.jogakbo.album.Album;
+import com.noyes.jogakbo.album.DTO.AlbumInvitationMessage;
 import com.noyes.jogakbo.user.DTO.UserInfo;
 
 @Component
@@ -57,7 +57,7 @@ public class SseEmitters {
    * @return Result info in String
    */
   @SuppressWarnings("null")
-  public String sendAlbumInvitation(String collaboUserUUID, Album requestAlbum) {
+  public String sendAlbumInvitation(String collaboUserUUID, AlbumInvitationMessage requestAlbum) {
 
     try {
 

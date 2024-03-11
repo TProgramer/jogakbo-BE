@@ -17,6 +17,7 @@ import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
 import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
 import com.noyes.jogakbo.album.DTO.AlbumInitInfo;
+import com.noyes.jogakbo.album.DTO.AlbumInvitationMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditInfo;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
 import com.noyes.jogakbo.album.DTO.AlbumInfo;
@@ -312,7 +313,7 @@ public class AlbumService {
    * @param
    * @return
    */
-  public Album sendAlbumInvitation(String albumUUID, String collaboUserUUID, String userUUID) {
+  public AlbumInvitationMessage sendAlbumInvitation(String albumUUID, String collaboUserUUID, String userUUID) {
 
     // 요청자가 album의 소유자인지 검증
     Album album = getAlbum(albumUUID);
@@ -336,7 +337,11 @@ public class AlbumService {
 
     albumRepository.save(album);
 
-    return album;
+    return AlbumInvitationMessage.builder()
+        .albumUUId(album.getAlbumUUID())
+        .albumName(album.getAlbumName())
+        .albumOwner(album.getAlbumOwner())
+        .build();
   }
 
   /**
