@@ -248,11 +248,17 @@ public class AlbumService {
     if (!album.getAlbumOwner().equals(userUUID))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "앨범 소유자만 앨범을 삭제할 수 있습니다.");
 
-    // 앨범에 조회를 막아 추가 입장을 막기 위해 mongoDB에서 Album Entity 삭제
-    albumRepository.deleteById(albumUUID);
-
-    // User Entity의 albums 필드에서도 해당 albumUUID 삭제
+    // 앨범에 조회를 막아 추가 입장을 막기 위해, User Owner의 albums 필드와 Collabo User의 collboAlbums
+    // 필드에서 해당 albumUUID 삭제
     userService.removeAlbum(albumUUID, userUUID);
+    List<String> collaboEditorsUUIDs = album.getAlbumEditors();
+    for (String collaboEditorUUID : collaboEditorsUUIDs) {
+
+      userService.removeCollaboAlbum(albumUUID, collaboEditorUUID);
+    }
+
+    // mongoDB에서 Album Entity 삭제
+    albumRepository.deleteById(albumUUID);
 
     // 모두를 앨범에서 강제 추방함을 알리고 소켓 연결 종료
     WebSocketSessionHolder.closeSessionByDestination(albumUUID);

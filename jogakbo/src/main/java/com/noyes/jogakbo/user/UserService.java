@@ -134,6 +134,13 @@ public class UserService {
     userRepository.save(user);
   }
 
+  public void removeCollaboAlbum(String albumUUId, String userUUId) {
+
+    User user = getUser(userUUId);
+    user.getCollaboAlbums().remove(albumUUId);
+    userRepository.save(user);
+  }
+
   /**
    * Id에 해당하는 User 조회
    * JPA Repository의 findBy Method를 사용하여 특정 User를 조회
