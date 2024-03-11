@@ -128,4 +128,13 @@ public class UserController {
 
     return ResponseEntity.ok(result);
   }
+
+  @Operation(description = "친구 목록 조회 API 입니다.")
+  @GetMapping("/friend")
+  public ResponseEntity<List<UserInfo>> getFriends(Principal principal) {
+
+    List<UserInfo> friends = userService.getFriends(principal.getName());
+
+    return ResponseEntity.ok(friends);
+  }
 }

@@ -469,4 +469,32 @@ public class UserService {
 
     return friends;
   }
+
+  /**
+   * userUUID에 해당하는 유저의 친구 정보를 UserInfo에 담아 반환
+   * 
+   * @param userUUID
+   * @return
+   */
+  public List<UserInfo> getFriends(String userUUID) {
+
+    User user = getUser(userUUID);
+    List<String> friendsUUIDs = user.getFriends();
+    List<UserInfo> friends = new ArrayList<>();
+
+    for (String friendUUID : friendsUUIDs) {
+
+      User friend = getUser(friendUUID);
+
+      UserInfo friendUserInfo = UserInfo.builder()
+          .userUUID(friend.getUserUUID())
+          .nickname(friend.getNickname())
+          .profileImageURL(friend.getProfileImageUrl())
+          .build();
+
+      friends.add(friendUserInfo);
+    }
+
+    return friends;
+  }
 }
