@@ -316,6 +316,8 @@ public class AlbumService {
 
     // 요청자가 album의 소유자인지 검증
     Album album = getAlbum(albumUUID);
+    if (!userUUID.equals(album.getAlbumOwner()))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
 
     // 이미 요청을 보낸 대상일 경우 예외처리
     List<String> albumInvitees = album.getAlbumInvitees();
