@@ -1,12 +1,10 @@
 package com.noyes.jogakbo.user;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.noyes.jogakbo.album.Album;
 import com.noyes.jogakbo.album.AlbumService;
 import com.noyes.jogakbo.album.DTO.AlbumInfo;
 import com.noyes.jogakbo.album.DTO.AlbumInvitationMessage;
@@ -51,19 +49,7 @@ public class MyPageService {
 
     // 초대받은 앨범 정보 불러오기
     List<String> albumInvitersUUIDs = user.getAlbumInviters();
-    List<AlbumInvitationMessage> albumInviters = new ArrayList<>();
-    for (String albumInviterUUID : albumInvitersUUIDs) {
-
-      Album album = albumService.getAlbum(albumInviterUUID);
-      String albumOwnerName = userService.getUser(album.getAlbumOwner()).getNickname();
-      AlbumInvitationMessage albumInvitationMessage = AlbumInvitationMessage.builder()
-          .albumUUID(album.getAlbumUUID())
-          .albumName(album.getAlbumName())
-          .albumOwnerName(albumOwnerName)
-          .build();
-
-      albumInviters.add(albumInvitationMessage);
-    }
+    List<AlbumInvitationMessage> albumInviters = albumService.getAlbumInvitationMessage(albumInvitersUUIDs);
 
     return UserProfile.builder()
         .userUUID(userUUID)

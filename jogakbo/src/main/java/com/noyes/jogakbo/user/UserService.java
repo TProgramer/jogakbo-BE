@@ -458,12 +458,16 @@ public class UserService {
    * @param userUUIDs
    * @return
    */
+  @SuppressWarnings("null")
   public List<UserInfo> getUserInfos(List<String> userUUIDs) {
 
     List<UserInfo> friends = new ArrayList<>();
     for (String userUUID : userUUIDs) {
 
-      User user = getUser(userUUID);
+      // 만약 더 이상 존재하지않는 유저라면, 무시하고 진행
+      User user = userRepository.findById(userUUID).get();
+      if (user == null)
+        continue;
 
       UserInfo friend = UserInfo.builder()
           .userUUID(user.getUserUUID())

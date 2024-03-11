@@ -519,6 +519,7 @@ public class AlbumService {
    * @param albumUUID
    * @return
    */
+  @SuppressWarnings("null")
   public List<AlbumInfo> getAlbumInfo(List<String> albumUUIDs) {
 
     // Authenication 객체의 userUUID로 이미 인증된 유저이므로 검증 생략
@@ -527,7 +528,10 @@ public class AlbumService {
 
     for (String albumUUID : albumUUIDs) {
 
-      Album album = getAlbum(albumUUID);
+      // 앨범이 존재하지않는 경우, 무시하고 진행
+      Album album = albumRepository.findById(albumUUID).get();
+      if (album == null)
+        continue;
 
       AlbumInfo albumInfo = AlbumInfo.builder()
           .albumUUID(album.getAlbumUUID())
@@ -541,6 +545,39 @@ public class AlbumService {
     }
 
     return albumInfos;
+  }
+
+  /**
+   * 이미 인증된 유저가 요청한 albumUUIDs에 해당하는 List<AlbumInvitationMessage> 반환
+   * 
+   * @param albumUUIDs
+   * @return
+   */
+  @SuppressWarnings("null")
+  public List<AlbumInvitationMessage> getAlbumInvitationMessage(List<String> albumUUIDs) {
+
+    // Authenication 객체의 userUUID로 이미 인증된 유저이므로 검증 생략
+
+    List<AlbumInvitationMessage> albumInviters = new ArrayList<>();
+
+    for (String albumUUID : albumUUIDs) {
+
+      // 앨범이 존재하지않는 경우, 무시하고 진행
+      Album album = albumRepository.findById(albumUUID).get();
+      if (album == null)
+        continue;
+
+      String albumOwnerName = userService.getUser(album.getAlbumOwner()).getNickname();
+      AlbumInvitationMessage albumInvitationMessage = AlbumInvitationMessage.builder()
+          .albumUUID(album.getAlbumUUID())
+          .albumName(album.getAlbumName())
+          .albumOwnerName(albumOwnerName)
+          .build();
+
+      albumInviters.add(albumInvitationMessage);
+    }
+
+    return albumInviters;
   }
 
   public AlbumEntryInfo getAlbumEntryInfo(String userUUID, String albumUUID) throws JsonProcessingException {
