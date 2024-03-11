@@ -134,10 +134,10 @@ public class UserService {
     userRepository.save(user);
   }
 
-  public void removeCollaboAlbum(String albumUUId, String userUUId) {
+  public void removeCollaboAlbum(String albumUUID, String userUUID) {
 
-    User user = getUser(userUUId);
-    user.getCollaboAlbums().remove(albumUUId);
+    User user = getUser(userUUID);
+    user.getCollaboAlbums().remove(albumUUID);
     userRepository.save(user);
   }
 
