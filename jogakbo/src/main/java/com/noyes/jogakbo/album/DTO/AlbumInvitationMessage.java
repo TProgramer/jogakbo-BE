@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class AlbumInvitationMessage {
 
-  private String albumUUId;
+  private String albumUUID;
   private String albumName;
   private String albumOwnerName;
 }

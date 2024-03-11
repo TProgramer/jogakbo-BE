@@ -347,7 +347,7 @@ public class AlbumService {
     String albumOwnerName = userService.getUser(albumOwnerUUID).getNickname();
 
     return AlbumInvitationMessage.builder()
-        .albumUUId(album.getAlbumUUID())
+        .albumUUID(album.getAlbumUUID())
         .albumName(album.getAlbumName())
         .albumOwnerName(albumOwnerName)
         .build();

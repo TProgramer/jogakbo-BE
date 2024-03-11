@@ -57,7 +57,7 @@ public class MyPageService {
       Album album = albumService.getAlbum(albumInviterUUID);
       String albumOwnerName = userService.getUser(album.getAlbumOwner()).getNickname();
       AlbumInvitationMessage albumInvitationMessage = AlbumInvitationMessage.builder()
-          .albumUUId(album.getAlbumUUID())
+          .albumUUID(album.getAlbumUUID())
           .albumName(album.getAlbumName())
           .albumOwnerName(albumOwnerName)
           .build();
