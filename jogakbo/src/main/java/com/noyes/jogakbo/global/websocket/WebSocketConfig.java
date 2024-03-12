@@ -21,22 +21,26 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
   private final FilterChannelInterceptor filterChannelInterceptor;
 
+  @SuppressWarnings("null")
   @Override
   public void configureMessageBroker(MessageBrokerRegistry config) {
     config.enableSimpleBroker("/sub");
     config.setApplicationDestinationPrefixes("/pub");
   }
 
+  @SuppressWarnings("null")
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/album-ws").setAllowedOrigins("*");
   }
 
+  @SuppressWarnings("null")
   @Override
   public void configureClientInboundChannel(ChannelRegistration registration) {
     registration.interceptors(filterChannelInterceptor);
   }
 
+  @SuppressWarnings("null")
   @Override
   public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
     registration.addDecoratorFactory(new WebSocketHandlerDecoratorFactory() {

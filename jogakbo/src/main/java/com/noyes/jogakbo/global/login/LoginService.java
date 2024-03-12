@@ -19,8 +19,8 @@ public class LoginService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String userUUID) throws UsernameNotFoundException {
-    User user = userService.getUser(userUUID)
-        .orElseThrow(() -> new UsernameNotFoundException("해당 소셜 ID가 존재하지 않습니다."));
+
+    User user = userService.getUser(userUUID);
 
     String password = PasswordUtil.generateRandomPassword();
     return org.springframework.security.core.userdetails.User.builder()

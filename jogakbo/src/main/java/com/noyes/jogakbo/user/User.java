@@ -2,16 +2,13 @@ package com.noyes.jogakbo.user;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
-
-import com.noyes.jogakbo.album.Album;
-import com.noyes.jogakbo.user.DTO.Friend;
 
 import lombok.Builder;
 import lombok.Data;
@@ -23,22 +20,28 @@ public class User {
 
   @Id
   private String userUUID;
-  private Role role;
   private String nickname;
   private String provider;
-  private String profileImageOriginalName;
-  private String profileImageUrl;
   private String refreshToken;
-  private List<Friend> friends;
-  private List<Friend> sentFriendRequests;
-  private List<Friend> receivedFriendRequests;
+  private String profileImageUrl;
+  @Builder.Default
+  private String profileImageOriginalName = "";
+  @Builder.Default
+  private Role role = Role.USER;
+  @Builder.Default
+  private List<String> friends = new ArrayList<>();
+  @Builder.Default
+  private List<String> friendRequestees = new ArrayList<>();
+  @Builder.Default
+  private List<String> friendRequesters = new ArrayList<>();
   // field for collaboration albums list
-  private List<Album> collaboAlbums;
+  @Builder.Default
+  private List<String> collaboAlbums = new ArrayList<>();
   // field for recieved invitation from album owner
-  private List<Album> receivedAlbumInvitations;
-
-  @DocumentReference(lazy = true)
-  private List<Album> albums;
+  @Builder.Default
+  private List<String> albumInviters = new ArrayList<>();
+  @Builder.Default
+  private List<String> albums = new ArrayList<>();
 
   // check flag to use @CreatedDate, @LastModified annotation with custom PK
   @Version

@@ -34,6 +34,7 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
   private final JwtService jwtService;
   private final AlbumService albumService;
 
+  @SuppressWarnings("null")
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel channel) {
 
@@ -70,7 +71,7 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
       String userUUID = headerAccessor.getUser().getName();
 
       // 유저가 albumEditors 에 포함되어 있는지 검증
-      if (!albumService.validAlbumEditor(albumID, userUUID))
+      if (!albumService.isValidAlbumEditor(albumID, userUUID))
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 존재하지 않습니다.");
 
       // sessionID에 구독 albumID를 경로를 업데이트

@@ -2,7 +2,8 @@ package com.noyes.jogakbo.user.DTO;
 
 import java.util.List;
 
-import com.noyes.jogakbo.album.Album;
+import com.noyes.jogakbo.album.DTO.AlbumInfo;
+import com.noyes.jogakbo.album.DTO.AlbumInvitationMessage;
 
 import lombok.Builder;
 import lombok.Data;
@@ -11,12 +12,12 @@ import lombok.Data;
 @Builder
 public class UserProfile {
 
+  private String userUUID;
   private String nickname;
-  private String profileImageUrl;
-  private List<Friend> friends;
-  private List<Friend> sentFriendRequest;
-  private List<Friend> receivedFriendRequest;
-  private List<Album> albums;
-  private List<Album> collaboAlbums;
-  private List<Album> receivedAlbumInvitations;
+  private String profileImageURL;
+  private List<UserInfo> friends;
+  private List<UserInfo> friendRequesters;
+  private List<AlbumInfo> albums;
+  private List<AlbumInfo> collaboAlbums;
+  private List<AlbumInvitationMessage> albumInviters;
 }

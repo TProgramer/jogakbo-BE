@@ -16,6 +16,7 @@ public class RedisService {
   private final ObjectMapper objectMapper;
 
   // 직접 만든 redisTemplate 사용
+  @SuppressWarnings("null")
   public void setAlbumRedisValue(String albumUUID, AlbumImagesInfo albumImagesInfo)
       throws JsonProcessingException {
 
@@ -25,6 +26,7 @@ public class RedisService {
   public <T> T getAlbumRedisValue(String albumUUID, Class<T> classType)
       throws JsonProcessingException {
 
+    @SuppressWarnings("null")
     String redisValue = (String) redisTemplate.opsForValue().get(albumUUID);
 
     return objectMapper.readValue(redisValue, classType);
@@ -35,6 +37,7 @@ public class RedisService {
    * 
    * @param
    */
+  @SuppressWarnings("null")
   public void removeAlbumRedisValue(String albumUUID) {
 
     redisTemplate.delete(albumUUID);

@@ -187,6 +187,7 @@ public class JwtService {
   /**
    * RefreshToken DB 저장(업데이트)
    */
+  @SuppressWarnings("null")
   public void updateRefreshToken(String userUUID, String refreshToken) {
     userRepository.findById(userUUID)
         .ifPresentOrElse(

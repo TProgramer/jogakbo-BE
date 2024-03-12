@@ -2,7 +2,6 @@ package com.noyes.jogakbo.user;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.http.MediaType;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -21,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.noyes.jogakbo.global.SseEmitters;
-import com.noyes.jogakbo.user.DTO.Friend;
-import com.noyes.jogakbo.user.DTO.FriendSearchResult;
+import com.noyes.jogakbo.user.DTO.UserSearchResult;
+import com.noyes.jogakbo.user.DTO.UserInfo;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "유저", description = "유저 API 모음집")
 public class UserController {
 
+  private final MyPageService myPageService;
   private final UserService userService;
   private final SseEmitters sseEmitters;
 
@@ -45,19 +44,19 @@ public class UserController {
   public ResponseEntity<UserProfile> getProfile(Principal principal) {
 
     String userUUID = principal.getName();
-    UserProfile userProfile = userService.getUserProfile(userUUID);
+    UserProfile userProfile = myPageService.getUserProfile(userUUID);
 
     return ResponseEntity.ok(userProfile);
   }
 
   @Operation(description = "닉네임으로 친구 찾기 API입니다.")
   @GetMapping("/search")
-  public ResponseEntity<List<FriendSearchResult>> searchFriend(@RequestParam String nickname, Principal principal) {
+  public ResponseEntity<List<UserSearchResult>> searchFriend(@RequestParam String nickname, Principal principal) {
 
     if (nickname.equals(""))
       return ResponseEntity.ok(List.of());
 
-    List<FriendSearchResult> searchResult = userService.searchFriend(nickname, principal.getName());
+    List<UserSearchResult> searchResult = userService.searchFriend(nickname, principal.getName());
 
     return ResponseEntity.ok(searchResult);
   }
@@ -66,7 +65,7 @@ public class UserController {
   @PostMapping("/friend-request/{userUUID}")
   public ResponseEntity<String> sendFriendRequest(@PathVariable String userUUID, Principal principal) {
 
-    Friend requestUser = userService.sendFriendRequest(principal.getName(), userUUID);
+    UserInfo requestUser = userService.sendFriendRequest(principal.getName(), userUUID);
 
     if (requestUser == null)
       return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
@@ -128,5 +127,14 @@ public class UserController {
     String result = userService.updateProfile(newNickname, profileImage, principal.getName());
 
     return ResponseEntity.ok(result);
+  }
+
+  @Operation(description = "친구 목록 조회 API 입니다.")
+  @GetMapping("/friend")
+  public ResponseEntity<List<UserInfo>> getFriends(Principal principal) {
+
+    List<UserInfo> friends = userService.getFriends(principal.getName());
+
+    return ResponseEntity.ok(friends);
   }
 }

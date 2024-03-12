@@ -23,8 +23,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
-import com.noyes.jogakbo.album.DTO.AlbumEntryMessage;
+import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
+import com.noyes.jogakbo.album.DTO.AlbumEntryInfo;
+import com.noyes.jogakbo.album.DTO.AlbumInitInfo;
+import com.noyes.jogakbo.album.DTO.AlbumInvitationMessage;
 import com.noyes.jogakbo.album.DTO.AlbumImageInfo;
+import com.noyes.jogakbo.album.DTO.AlbumMemberInfo;
 import com.noyes.jogakbo.global.SseEmitters;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,14 +58,23 @@ public class AlbumController {
     return ResponseEntity.ok(newAlbumID);
   }
 
-  @Operation(description = "앨범 정보 조회 API입니다.")
+  @Operation(description = "입장하려는 앨범 정보 제공 API입니다.")
   @GetMapping("/{albumUUID}")
-  public ResponseEntity<AlbumEntryMessage> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
+  public ResponseEntity<AlbumEntryInfo> getAlbumEntryInfo(@PathVariable String albumUUID, Principal principal)
+      throws JsonProcessingException {
+
+    return ResponseEntity.ok(albumService.getAlbumEntryInfo(principal.getName(), albumUUID));
+  }
+
+  @Operation(description = "앨범 입장 후, 앨범 상태 초기화 API입니다.")
+  @GetMapping("/{albumUUID}/init")
+  public ResponseEntity<AlbumInitInfo> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
       throws JsonProcessingException {
 
     return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumUUID));
   }
 
+  @SuppressWarnings("null")
   @Operation(description = "앨범 페이지 추가 API입니다.")
   @PostMapping("{albumUUID}/page")
   public ResponseEntity<String> createPage(@PathVariable String albumUUID, Principal principal)
@@ -72,6 +85,7 @@ public class AlbumController {
     return ResponseEntity.ok("페이지를 성공적으로 추가했습니다.");
   }
 
+  @SuppressWarnings("null")
   @Operation(description = "앨범 내부 사진 등록 API입니다.")
   @PostMapping("/{albumUUID}/image")
   public ResponseEntity<String> uploadImages(@PathVariable String albumUUID,
@@ -84,6 +98,7 @@ public class AlbumController {
     return ResponseEntity.ok("사진을 성공적으로 등록했습니다.");
   }
 
+  @SuppressWarnings("null")
   @Operation(description = "앨범 내부 사진 삭제 API입니다.")
   @DeleteMapping("/{albumUUID}/image/{albumImageUUID}")
   public ResponseEntity<String> unloadImage(@PathVariable String albumUUID,
@@ -131,12 +146,13 @@ public class AlbumController {
       @PathVariable String collaboUserUUID,
       Principal principal) {
 
-    Album album = albumService.sendAlbumInvitation(albumUUID, collaboUserUUID, principal.getName());
+    AlbumInvitationMessage albumInvitationMessage = albumService.sendAlbumInvitation(albumUUID, collaboUserUUID,
+        principal.getName());
 
-    if (album == null)
-      return ResponseEntity.ok("이미 친구이거나 요청을 보낸 상대입니다.");
+    if (albumInvitationMessage == null)
+      return ResponseEntity.ok("이미 앨범에 초대했거나 요청을 보낸 상대입니다.");
 
-    String result = sseEmitters.sendAlbumInvitation(collaboUserUUID, album);
+    String result = sseEmitters.sendAlbumInvitation(collaboUserUUID, albumInvitationMessage);
 
     return ResponseEntity.ok(result);
   }
@@ -149,5 +165,25 @@ public class AlbumController {
     String res = albumService.replyAlbumInvitation(albumUUID, principal.getName(), reply);
 
     return ResponseEntity.ok(res);
+  }
+
+  @Operation(description = "앨범 구성원 조회 API입니다.")
+  @GetMapping("/{albumUUID}/album-member-info")
+  public ResponseEntity<AlbumMemberInfo> getAlbumMemberInfo(@PathVariable String albumUUID,
+      Principal principal) {
+
+    AlbumMemberInfo albumMemberInfo = albumService.getAlbumMemberInfo(albumUUID, principal.getName());
+
+    return ResponseEntity.ok(albumMemberInfo);
+  }
+
+  @Operation(description = "앨범 상세 정보 조회 API입니다.")
+  @GetMapping("/{albumUUID}/album-detail-info")
+  public ResponseEntity<AlbumDetailInfo> getAlbumDetailInfo(@PathVariable String albumUUID,
+      Principal principal) {
+
+    AlbumDetailInfo albumMemberInfo = albumService.getAlbumDetailInfo(albumUUID, principal.getName());
+
+    return ResponseEntity.ok(albumMemberInfo);
   }
 }

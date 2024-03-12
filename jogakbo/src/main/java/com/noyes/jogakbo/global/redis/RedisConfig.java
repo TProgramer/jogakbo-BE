@@ -17,12 +17,14 @@ public class RedisConfig {
   @Value("${spring.redis.port}")
   private int redisPort;
 
+  @SuppressWarnings("null")
   @Bean
   public RedisConnectionFactory redisConnectionFactory() {
 
     return new LettuceConnectionFactory(redisHost, redisPort);
   }
 
+  @SuppressWarnings("null")
   @Bean
   public RedisTemplate<String, Object> redisTemplate() {
     RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
