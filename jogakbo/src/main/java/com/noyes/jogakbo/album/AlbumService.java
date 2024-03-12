@@ -529,7 +529,7 @@ public class AlbumService {
     for (String albumUUID : albumUUIDs) {
 
       // 앨범이 존재하지않는 경우, 무시하고 진행
-      Album album = albumRepository.findById(albumUUID).get();
+      Album album = albumRepository.findById(albumUUID).orElse(null);
       if (album == null)
         continue;
 
@@ -563,7 +563,7 @@ public class AlbumService {
     for (String albumUUID : albumUUIDs) {
 
       // 앨범이 존재하지않는 경우, 무시하고 진행
-      Album album = albumRepository.findById(albumUUID).get();
+      Album album = albumRepository.findById(albumUUID).orElse(null);
       if (album == null)
         continue;
 

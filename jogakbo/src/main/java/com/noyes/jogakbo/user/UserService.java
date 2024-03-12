@@ -465,7 +465,7 @@ public class UserService {
     for (String userUUID : userUUIDs) {
 
       // 만약 더 이상 존재하지않는 유저라면, 무시하고 진행
-      User user = userRepository.findById(userUUID).get();
+      User user = userRepository.findById(userUUID).orElse(null);
       if (user == null)
         continue;
 
