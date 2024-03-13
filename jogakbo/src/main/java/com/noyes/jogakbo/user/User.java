@@ -27,7 +27,7 @@ public class User {
   @Builder.Default
   private String profileImageOriginalName = "";
   @Builder.Default
-  private Role role = Role.USER;
+  private Role role = Role.BEGINNER;
   @Builder.Default
   private List<String> friends = new ArrayList<>();
   @Builder.Default
