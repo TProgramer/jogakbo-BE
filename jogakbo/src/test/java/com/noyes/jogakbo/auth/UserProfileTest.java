@@ -7,18 +7,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 
+import com.noyes.jogakbo.global.AcceptanceTest;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.user.Role;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+@AcceptanceTest
 @DisplayName("로그인 테스트")
 public class UserProfileTest {
 
