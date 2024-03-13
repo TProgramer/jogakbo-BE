@@ -204,4 +204,20 @@ public class JwtService {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 인증 토큰입니다.");
     }
   }
+
+  public String createLoginTestToken(String userUUID, String nickname) {
+
+    Date now = new Date();
+    return JWT.create() // JWT 토큰을 생성하는 빌더 반환
+        .withSubject(ACCESS_TOKEN_SUBJECT) // JWT의 Subject 지정
+        .withExpiresAt(new Date(now.getTime() + accessTokenExpirationPeriod)) // 토큰 만료 시간 설정
+
+        // 클레임으로는 저희는 userUUID 하나만 사용
+        // 추가적으로 식별자나, 이름 등의 정보를 더 추가 가능
+        // 추가할 경우 .withClaim(클래임 이름, 클래임 값) 으로 설정
+        .withClaim(ID_CLAIM, userUUID)
+        .withClaim(NAME_CLAIM, nickname)
+        .withClaim(PROVIDER_CLAIM, "kakao")
+        .sign(Algorithm.HMAC512(secretKey)); // HMAC512 알고리즘 사용
+  }
 }
