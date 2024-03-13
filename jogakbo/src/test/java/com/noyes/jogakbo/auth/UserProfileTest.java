@@ -36,7 +36,7 @@ public class UserProfileTest {
 
   @SuppressWarnings("null")
   @Nested
-  @DisplayName("When: 신규 유저가 로그인 한 상태에서")
+  @DisplayName("Given: 신규 유저가 로그인 한 상태에서")
   class login_request_from_beginner {
 
     String testToken = jwtService.createLoginTestToken("Beginner_UUID", "Beginner_Test");
@@ -54,7 +54,7 @@ public class UserProfileTest {
         .get(0);
 
     @Nested
-    @DisplayName("Given: 프로필 정보를 요청하면")
+    @DisplayName("When: 프로필 정보를 요청하면")
     class request_beginner_user_profile {
 
       ResponseSpec response = webTestClient
