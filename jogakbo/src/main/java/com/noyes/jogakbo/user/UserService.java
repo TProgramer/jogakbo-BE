@@ -508,4 +508,24 @@ public class UserService {
 
     return friends;
   }
+
+  /**
+   * 튜토리얼을 완료하거나 스킵한 BEGINNER를 USER로 설정
+   * 
+   * @param userUUID
+   */
+  public void tutorialCompletion(String userUUID) {
+
+    // User Entity를 받아와서
+    User user = getUser(userUUID);
+
+    // BEGINNER가 맞는지 검증하기
+    if (user.getRole() != Role.BEGINNER)
+      // 아니라면 400 Error 반환
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "신규 유저가 아닙니다.");
+
+    // 검증 후, 일반 USER로 설정 후 저장
+    user.setRole(Role.USER);
+    userRepository.save(user);
+  }
 }

@@ -55,6 +55,7 @@ public class MyPageService {
         .userUUID(userUUID)
         .nickname(user.getNickname())
         .profileImageURL(user.getProfileImageUrl())
+        .role(user.getRole())
         .friends(friends)
         .friendRequesters(friendRequesters)
         .albums(albums)
