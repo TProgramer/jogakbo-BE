@@ -48,8 +48,7 @@ public class UserProfileTest {
         .expectBody(UserProfile.class)
         .returnResult()
         .getResponseHeaders()
-        .get(accessHeader)
-        .get(0);
+        .get(accessHeader).get(0);
 
     @Nested
     @DisplayName("When: 프로필 정보를 요청하면")
@@ -73,6 +72,36 @@ public class UserProfileTest {
             .getResponseBody();
 
         assertEquals(Role.BEGINNER, beginnerUserProfile.getRole());
+      }
+    }
+
+    @Nested
+    @DisplayName("When: 튜토리얼 완료를 요청하면")
+    class request_tutorial_completion {
+
+      ResponseSpec response = webTestClient
+          .put()
+          .uri("/user/tutorial-completion")
+          .header(accessHeader, "Bearer " + beginnerAccessToken)
+          .exchange()
+          .expectStatus().isOk();
+
+      @Test
+      @DisplayName("Then: Role 이 USER 인 UserProfile이 반환된다.")
+      void response_UserProfile_with_USER_Role() {
+
+        UserProfile userProfile = webTestClient
+            .get()
+            .uri("/user")
+            .accept(MediaType.APPLICATION_JSON)
+            .header(accessHeader, "Bearer " + beginnerAccessToken)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(UserProfile.class)
+            .returnResult()
+            .getResponseBody();
+
+        assertEquals(Role.USER, userProfile.getRole());
       }
     }
   }
