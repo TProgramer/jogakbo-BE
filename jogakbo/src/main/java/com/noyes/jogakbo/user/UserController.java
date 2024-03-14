@@ -137,4 +137,13 @@ public class UserController {
 
     return ResponseEntity.ok(friends);
   }
+
+  @Operation(description = "신규 유저에서 기존 유저로의 전환 API 입니다.")
+  @PutMapping("/tutorial-completion")
+  public ResponseEntity<Void> tutorialCompletion(Principal principal) {
+
+    userService.tutorialCompletion(principal.getName());
+
+    return ResponseEntity.ok().build();
+  }
 }
