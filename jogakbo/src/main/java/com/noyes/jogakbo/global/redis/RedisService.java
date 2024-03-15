@@ -1,5 +1,7 @@
 package com.noyes.jogakbo.global.redis;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ public class RedisService {
   @SuppressWarnings("null")
   public void setAlbumRedisValue(String albumUUID, AlbumImagesInfo albumImagesInfo) {
 
+    albumImagesInfo.setLastModifiedDate(LocalDateTime.now());
     try {
 
       redisTemplate.opsForValue().set(albumUUID, objectMapper.writeValueAsString(albumImagesInfo));

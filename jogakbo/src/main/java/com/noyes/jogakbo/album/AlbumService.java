@@ -539,12 +539,14 @@ public class AlbumService {
       if (album == null)
         continue;
 
+      AlbumImagesInfo albumImagesInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+
       AlbumInfo albumInfo = AlbumInfo.builder()
           .albumUUID(album.getAlbumUUID())
           .albumName(album.getAlbumName())
           .thumbnailImageURL(album.getThumbnailImageURL())
           .createdDate(album.getCreatedDate())
-          .lastModifiedDate(album.getLastModifiedDate())
+          .lastModifiedDate(albumImagesInfo.getLastModifiedDate())
           .build();
 
       albumInfos.add(albumInfo);

@@ -1,6 +1,7 @@
 package com.noyes.jogakbo.global.redis;
 
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.springframework.data.redis.core.RedisHash;
@@ -24,4 +25,8 @@ public class AlbumImagesInfo {
   private String id;
   @Builder.Default
   private List<List<AlbumImageInfo>> imagesInfo = List.of(new ArrayList<>());
+  @Builder.Default
+  private LocalDateTime createdDate = LocalDateTime.now();
+  @Builder.Default
+  private LocalDateTime lastModifiedDate = LocalDateTime.now();
 }
