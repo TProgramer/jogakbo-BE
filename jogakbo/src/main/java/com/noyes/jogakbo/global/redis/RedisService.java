@@ -17,19 +17,30 @@ public class RedisService {
 
   // 직접 만든 redisTemplate 사용
   @SuppressWarnings("null")
-  public void setAlbumRedisValue(String albumUUID, AlbumImagesInfo albumImagesInfo)
-      throws JsonProcessingException {
+  public void setAlbumRedisValue(String albumUUID, AlbumImagesInfo albumImagesInfo) {
 
-    redisTemplate.opsForValue().set(albumUUID, objectMapper.writeValueAsString(albumImagesInfo));
+    try {
+
+      redisTemplate.opsForValue().set(albumUUID, objectMapper.writeValueAsString(albumImagesInfo));
+    } catch (JsonProcessingException e) {
+
+      e.printStackTrace();
+    }
   }
 
-  public <T> T getAlbumRedisValue(String albumUUID, Class<T> classType)
-      throws JsonProcessingException {
+  public <T> T getAlbumRedisValue(String albumUUID, Class<T> classType) {
 
     @SuppressWarnings("null")
     String redisValue = (String) redisTemplate.opsForValue().get(albumUUID);
+    T albumRedisValue = null;
+    try {
 
-    return objectMapper.readValue(redisValue, classType);
+      albumRedisValue = objectMapper.readValue(redisValue, classType);
+    } catch (JsonProcessingException e) {
+
+      e.printStackTrace();
+    }
+    return albumRedisValue;
   }
 
   /**

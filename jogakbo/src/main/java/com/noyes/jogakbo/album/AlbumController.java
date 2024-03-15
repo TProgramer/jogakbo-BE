@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.noyes.jogakbo.album.DTO.AlbumImageEditMessage;
 import com.noyes.jogakbo.album.DTO.AlbumDetailInfo;
@@ -49,8 +48,7 @@ public class AlbumController {
 
   @Operation(description = "앨범 생성 API입니다.")
   @PostMapping()
-  public ResponseEntity<String> createAlbum(@RequestParam String albumName, Principal principal)
-      throws JsonProcessingException {
+  public ResponseEntity<String> createAlbum(@RequestParam String albumName, Principal principal) {
 
     String newAlbumID = albumService.createAlbum(albumName, principal.getName());
     log.info(newAlbumID);
@@ -60,16 +58,14 @@ public class AlbumController {
 
   @Operation(description = "입장하려는 앨범 정보 제공 API입니다.")
   @GetMapping("/{albumUUID}")
-  public ResponseEntity<AlbumEntryInfo> getAlbumEntryInfo(@PathVariable String albumUUID, Principal principal)
-      throws JsonProcessingException {
+  public ResponseEntity<AlbumEntryInfo> getAlbumEntryInfo(@PathVariable String albumUUID, Principal principal) {
 
     return ResponseEntity.ok(albumService.getAlbumEntryInfo(principal.getName(), albumUUID));
   }
 
   @Operation(description = "앨범 입장 후, 앨범 상태 초기화 API입니다.")
   @GetMapping("/{albumUUID}/init")
-  public ResponseEntity<AlbumInitInfo> getAlbumInfo(@PathVariable String albumUUID, Principal principal)
-      throws JsonProcessingException {
+  public ResponseEntity<AlbumInitInfo> getAlbumInfo(@PathVariable String albumUUID, Principal principal) {
 
     return ResponseEntity.ok(albumService.getEntryMessage(principal.getName(), albumUUID));
   }
@@ -78,7 +74,7 @@ public class AlbumController {
   @Operation(description = "앨범 페이지 추가 API입니다.")
   @PostMapping("{albumUUID}/page")
   public ResponseEntity<String> createPage(@PathVariable String albumUUID, Principal principal)
-      throws JsonMappingException, JsonProcessingException {
+      throws JsonMappingException {
 
     List<List<AlbumImageInfo>> imagesInfo = albumService.addNewPage(albumUUID);
     simpMessageTemplate.convertAndSend("/sub/edit/" + albumUUID, imagesInfo);
@@ -90,7 +86,7 @@ public class AlbumController {
   @PostMapping("/{albumUUID}/image")
   public ResponseEntity<String> uploadImages(@PathVariable String albumUUID,
       @RequestPart List<MultipartFile> multipartFiles,
-      @RequestParam String fileInfos) throws JsonProcessingException {
+      @RequestParam String fileInfos) {
 
     List<List<AlbumImageInfo>> imagesInfo = albumService.uploadImages(albumUUID, multipartFiles, fileInfos);
     simpMessageTemplate.convertAndSend("/sub/edit/" + albumUUID, imagesInfo);
@@ -102,7 +98,7 @@ public class AlbumController {
   @Operation(description = "앨범 내부 사진 삭제 API입니다.")
   @DeleteMapping("/{albumUUID}/image/{albumImageUUID}")
   public ResponseEntity<String> unloadImage(@PathVariable String albumUUID,
-      @PathVariable String albumImageUUID) throws JsonProcessingException {
+      @PathVariable String albumImageUUID) {
 
     List<List<AlbumImageInfo>> imagesInfo = albumService.unloadImage(albumUUID, albumImageUUID);
     simpMessageTemplate.convertAndSend("/sub/edit/" + albumUUID, imagesInfo);
