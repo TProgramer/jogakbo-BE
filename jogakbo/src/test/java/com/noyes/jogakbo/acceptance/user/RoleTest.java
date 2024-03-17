@@ -1,4 +1,4 @@
-package com.noyes.jogakbo.auth;
+package com.noyes.jogakbo.acceptance.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -11,14 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 
-import com.noyes.jogakbo.global.AcceptanceTest;
+import com.noyes.jogakbo.acceptance.global.AcceptanceTest;
 import com.noyes.jogakbo.global.jwt.JwtService;
 import com.noyes.jogakbo.user.Role;
 import com.noyes.jogakbo.user.DTO.UserProfile;
 
 @AcceptanceTest
-@DisplayName("로그인 테스트")
-public class UserProfileTest {
+@DisplayName("유저 역할 테스트")
+public class RoleTest {
 
   @Autowired
   private WebTestClient webTestClient;

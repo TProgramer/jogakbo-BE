@@ -1,4 +1,4 @@
-package com.noyes.jogakbo.global;
+package com.noyes.jogakbo.acceptance.global;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.TestContext;

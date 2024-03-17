@@ -51,7 +51,7 @@ public class AlbumService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 앨범 ID 입니다."));
   }
 
-  public AlbumInitInfo getEntryMessage(String userUUID, String albumUUID) throws JsonProcessingException {
+  public AlbumInitInfo getEntryMessage(String userUUID, String albumUUID) {
 
     // 앨범 ID로 앨범 가져오기
     Album album = getAlbum(albumUUID);
@@ -72,7 +72,7 @@ public class AlbumService {
   }
 
   @SuppressWarnings("null")
-  public String createAlbum(String albumName, String userUUID) throws JsonProcessingException {
+  public String createAlbum(String albumName, String userUUID) {
 
     String albumUUID = UUID.randomUUID().toString();
 
@@ -95,7 +95,7 @@ public class AlbumService {
     return albumUUID;
   }
 
-  public List<List<AlbumImageInfo>> addNewPage(String albumUUID) throws JsonProcessingException {
+  public List<List<AlbumImageInfo>> addNewPage(String albumUUID) {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
@@ -105,16 +105,24 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<AlbumImageInfo>> uploadImages(String albumUUID, List<MultipartFile> multipartFiles, String fileInfos)
-      throws JsonProcessingException {
+  @SuppressWarnings("null")
+  public List<List<AlbumImageInfo>> uploadImages(String albumUUID, List<MultipartFile> multipartFiles,
+      String fileInfos) {
 
     // S3에 업로드 시도 후, 업로드 된 S3 파일명 리스트로 받아오기
     List<String> uploadFileNames = awsS3Service.uploadFiles(multipartFiles, albumUUID);
 
     ObjectMapper objectMapper = new ObjectMapper();
-    List<AlbumImageEditInfo> imageInfos = objectMapper.readValue(fileInfos,
-        new TypeReference<List<AlbumImageEditInfo>>() {
-        });
+    List<AlbumImageEditInfo> imageInfos = null;
+    try {
+
+      imageInfos = objectMapper.readValue(fileInfos,
+          new TypeReference<List<AlbumImageEditInfo>>() {
+          });
+    } catch (JsonProcessingException e) {
+
+      e.printStackTrace();
+    }
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
@@ -140,8 +148,7 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<AlbumImageInfo>> unloadImage(String albumUUID, String imageUUID)
-      throws JsonProcessingException {
+  public List<List<AlbumImageInfo>> unloadImage(String albumUUID, String imageUUID) {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
@@ -163,8 +170,7 @@ public class AlbumService {
     return imagesInfo;
   }
 
-  public List<List<AlbumImageInfo>> editImage(String albumUUID, List<AlbumImageEditMessage> payload)
-      throws JsonProcessingException {
+  public List<List<AlbumImageInfo>> editImage(String albumUUID, List<AlbumImageEditMessage> payload) {
 
     AlbumImagesInfo targetInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
     List<List<AlbumImageInfo>> imagesInfo = targetInfo.getImagesInfo();
@@ -533,12 +539,14 @@ public class AlbumService {
       if (album == null)
         continue;
 
+      AlbumImagesInfo albumImagesInfo = redisService.getAlbumRedisValue(albumUUID, AlbumImagesInfo.class);
+
       AlbumInfo albumInfo = AlbumInfo.builder()
           .albumUUID(album.getAlbumUUID())
           .albumName(album.getAlbumName())
           .thumbnailImageURL(album.getThumbnailImageURL())
           .createdDate(album.getCreatedDate())
-          .lastModifiedDate(album.getLastModifiedDate())
+          .lastModifiedDate(albumImagesInfo.getLastModifiedDate())
           .build();
 
       albumInfos.add(albumInfo);
@@ -580,7 +588,7 @@ public class AlbumService {
     return albumInviters;
   }
 
-  public AlbumEntryInfo getAlbumEntryInfo(String userUUID, String albumUUID) throws JsonProcessingException {
+  public AlbumEntryInfo getAlbumEntryInfo(String userUUID, String albumUUID) {
 
     // 유저가 album editor 인지 검증
     if (!isValidAlbumEditor(albumUUID, userUUID))

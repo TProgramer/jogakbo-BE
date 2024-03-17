@@ -1,4 +1,4 @@
-package com.noyes.jogakbo.global;
+package com.noyes.jogakbo.acceptance.global;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
